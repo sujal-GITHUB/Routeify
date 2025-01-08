@@ -128,3 +128,77 @@ Example:
   ]
 }
 ```
+### Get User Profile
+
+#### GET /users/profile
+
+This endpoint is used to retrieve the profile of the authenticated user.
+
+#### Headers
+
+- `Authorization` (string, required): The JWT token of the authenticated user.
+
+#### Response (Status Code: 200)
+
+The response will be a JSON object containing the user's profile information.
+
+Example:
+```json
+{
+  "user": {
+    "id": "user_id",
+    "firstname": "John",
+    "lastname": "Doe",
+    "email": "john.doe@example.com"
+  }
+}
+```
+
+#### Error Response (Status Code: 401)
+
+The error response will be a JSON object containing the following field:
+
+- `message` (string): The error message.
+
+Example:
+```json
+{
+  "message": "Unauthorized"
+}
+```
+
+### Logout User
+
+#### GET /users/logout
+
+This endpoint is used to log out the authenticated user.
+
+#### Headers
+
+- `Authorization` (string, required): The JWT token of the authenticated user.
+
+#### Response (Status Code: 200)
+
+The response will be a JSON object containing the following field:
+
+- `message` (string): A message indicating the user has been logged out.
+
+Example:
+```json
+{
+  "message": "Logged out"
+}
+```
+
+#### Error Response (Status Code: 401)
+
+The error response will be a JSON object containing the following field:
+
+- `message` (string): The error message.
+
+Example:
+```json
+{
+  "message": "Unauthorized"
+}
+```
