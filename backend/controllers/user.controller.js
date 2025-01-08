@@ -1,8 +1,9 @@
 const userModel = require('../models/user.model')
 const userService = require('../services/user.service')
 const {validationResult} = require('express-validator')
+const blacklistToken = require('../models/blacklistToken.model')
 
-module.exports.registerUser = async (req, res, next) => {
+  module.exports.registerUser = async (req, res, next) => {
     const errors = validationResult(req);
   
     // Validation errors
@@ -71,10 +72,13 @@ module.exports.registerUser = async (req, res, next) => {
         return res.status(401).json({ message: 'Invalid Email or Password' });
       }
   
-      // Generate authentication token
       const token = user.generateAuthToken();
-  
-      // Send success response
+      res.cookie('token', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'development',
+        maxAge: 3600000
+      })
+
       res.status(200).json({ token, user });
     } catch (error) {
       console.error("Error in loginUser:", error);
@@ -83,3 +87,16 @@ module.exports.registerUser = async (req, res, next) => {
       res.status(500).json({ message: 'An error occurred during login' });
     }
   };  
+
+  module.exports.getUserProfile = async (req,res,next)=>{
+    res.status(200).json(req.user)
+  }
+
+  module.exports.logoutUser = async (req,res,next)=>{
+    res.clearCookie('token')
+    const token = req.cookies.token || req.headers.authorization.split(' ')[1]
+
+    await blacklistToken.create({token})
+
+    res.status(200).json({message: 'Logged out'})
+  }
