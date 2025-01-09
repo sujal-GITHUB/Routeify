@@ -209,7 +209,7 @@ Example:
 
 ### Register Captain
 
-#### POST /api/captains/register
+#### POST /captains/register
 
 This endpoint is used to register a new captain.
 
@@ -304,5 +304,143 @@ Example:
       "location": "body"
     }
   ]
+}
+```
+### Login Captain
+
+#### POST /captains/login
+
+This endpoint is used to authenticate an existing captain.
+
+#### Request Body
+
+The request body should be a JSON object with the following fields:
+
+- `email` (string, required): The email address of the captain. Must be a valid email.
+- `password` (string, required): The password for the captain's account. Must be at least 6 characters long.
+
+Example:
+```json
+{
+  "email": "jane.smith@example.com",
+  "password": "securepassword"
+}
+```
+
+#### Response (Status Code: 200)
+
+The response will be a JSON object containing the following field:
+
+- `token` (string): The JWT token for the authenticated captain.
+
+Example:
+```json
+{
+  "token": "your_jwt_token_here"
+}
+```
+
+#### Error Response (Status Code: 400)
+
+The error response will be a JSON object containing the following field:
+
+- `errors` (array): An array of error objects.
+
+Example:
+```json
+{
+  "errors": [
+    {
+      "msg": "Invalid Email",
+      "param": "email",
+      "location": "body"
+    },
+    {
+      "msg": "Password must be at least 6 characters long",
+      "param": "password",
+      "location": "body"
+    }
+  ]
+}
+```
+
+### Get Captain Profile
+
+#### GET /captains/profile
+
+This endpoint is used to retrieve the profile of the authenticated captain.
+
+#### Headers
+
+- `Authorization` (string, required): The JWT token of the authenticated captain.
+
+#### Response (Status Code: 200)
+
+The response will be a JSON object containing the captain's profile information.
+
+Example:
+```json
+{
+  "captain": {
+    "id": "captain_id",
+    "firstname": "Jane",
+    "lastname": "Smith",
+    "email": "jane.smith@example.com",
+    "vehicle": {
+      "color": "Red",
+      "plate": "XYZ123",
+      "capacity": 4,
+      "vehicleType": "car"
+    }
+  }
+}
+```
+
+#### Error Response (Status Code: 401)
+
+The error response will be a JSON object containing the following field:
+
+- `message` (string): The error message.
+
+Example:
+```json
+{
+  "message": "Unauthorized"
+}
+```
+
+### Logout Captain
+
+#### GET /captains/logout
+
+This endpoint is used to log out the authenticated captain.
+
+#### Headers
+
+- `Authorization` (string, required): The JWT token of the authenticated captain.
+
+#### Response (Status Code: 200)
+
+The response will be a JSON object containing the following field:
+
+- `message` (string): A message indicating the captain has been logged out.
+
+Example:
+```json
+{
+  "message": "Logged out"
+}
+```
+
+#### Error Response (Status Code: 401)
+
+The error response will be a JSON object containing the following field:
+
+- `message` (string): The error message.
+
+Example:
+```json
+{
+  "message": "Unauthorized"
 }
 ```

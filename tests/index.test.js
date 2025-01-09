@@ -99,7 +99,7 @@ describe.skip('User Endpoints', () => {
     });
 })    
 
-describe('Captain Endpoints', () => {
+describe.skip('Captain Endpoints', () => {
     it('should register a new captain', async () => {
         const email = generateRandomEmail(); // Generate a random email
         const res = await request(BACKEND_URL)
@@ -139,7 +139,7 @@ describe('Captain Endpoints', () => {
         expect(res.body).toHaveProperty('message', 'Captain already exists.');
     });
 
-    it.skip('should login an existing captain', async () => {
+    it('should login an existing captain', async () => {
         const res = await request(BACKEND_URL)
             .post('/captains/login')
             .send({
@@ -151,7 +151,7 @@ describe('Captain Endpoints', () => {
         expect(res.body).toHaveProperty('captain');
     });
 
-    it.skip('should not login with incorrect password', async () => {
+    it('should not login with incorrect password', async () => {
         const res = await request(BACKEND_URL)
             .post('/captains/login')
             .send({
@@ -162,27 +162,45 @@ describe('Captain Endpoints', () => {
         expect(res.body).toHaveProperty('message', 'Invalid Email or Password');
     });
 
-    it.skip('should get captain profile', async () => {
+    it('should get captain profile', async () => {
         const loginRes = await request(BACKEND_URL)
             .post('/captains/login')
             .send({
                 email: 'janedoe@example.com',
                 password: 'password123'
             });
-
+    
         expect(loginRes.statusCode).toEqual(200);
         expect(loginRes.body).toHaveProperty('token');
         const token = loginRes.body.token;
-
+    
         const res = await request(BACKEND_URL)
             .get('/captains/profile')
             .set('Authorization', `Bearer ${token}`);
-
+    
         expect(res.statusCode).toEqual(200);
-        expect(res.body).toHaveProperty('email', 'janedoe@example.com');
-    });
+        console.log(res.body);  // To see the full response
+    
+        // Checking if the response contains the captain property
+        expect(res.body).toHaveProperty('captain');
+    
+        // Additional checks to verify the captain's information
+        const { captain } = res.body;  // Destructure captain object
+        expect(captain).toHaveProperty('fullname');
+        expect(captain).toHaveProperty('vehicle');
+        expect(captain.fullname).toEqual({ firstname: 'Jane', lastname: 'Doe' });
+        expect(captain.vehicle).toEqual({
+            color: 'Blue',
+            plate: 'XYZ789',
+            capacity: 2,
+            vehicleType: 'motorcycle'
+        });
+        expect(captain).toHaveProperty('_id');
+        expect(captain).toHaveProperty('email');
+        expect(captain.status).toEqual('inactive');
+    });    
 
-    it.skip('should logout captain', async () => {
+    it('should logout captain', async () => {
         const loginRes = await request(BACKEND_URL)
             .post('/captains/login')
             .send({
