@@ -1,6 +1,6 @@
 # Routeify Backend
 
-## API Endpoints
+## User Endpoints Documentation
 
 ### Register User
 
@@ -30,7 +30,7 @@ Example:
 }
 ```
 
-#### Response (Staus Code : 201)
+#### Response (Status Code: 201)
 
 The response will be a JSON object containing the following field:
 
@@ -43,7 +43,7 @@ Example:
 }
 ```
 
-#### Error Response (Status Code : 400)
+#### Error Response (Status Code: 400)
 
 The error response will be a JSON object containing the following field:
 
@@ -64,13 +64,14 @@ Example:
       "location": "body"
     },
     {
-      "msg": "Password must be atleast 6 characters long",
+      "msg": "Password must be at least 6 characters long",
       "param": "password",
       "location": "body"
     }
   ]
 }
 ```
+
 ### Login User
 
 #### POST /users/login
@@ -121,13 +122,14 @@ Example:
       "location": "body"
     },
     {
-      "msg": "Password must be atleast 6 characters long",
+      "msg": "Password must be at least 6 characters long",
       "param": "password",
       "location": "body"
     }
   ]
 }
 ```
+
 ### Get User Profile
 
 #### GET /users/profile
@@ -200,5 +202,107 @@ Example:
 ```json
 {
   "message": "Unauthorized"
+}
+```
+
+## Captain Endpoints Documentation
+
+### Register Captain
+
+#### POST /api/captains/register
+
+This endpoint is used to register a new captain.
+
+#### Request Body
+
+The request body should be a JSON object with the following fields:
+
+- `fullname`: An object containing:
+  - `firstname` (string, required): The first name of the captain. Must be at least 3 characters long.
+  - `lastname` (string, optional): The last name of the captain. Must be at least 3 characters long.
+- `email` (string, required): The email address of the captain. Must be a valid email format.
+- `password` (string, required): The password for the captain's account. Must be at least 6 characters long.
+- `vehicle`: An object containing:
+  - `color` (string, required): The color of the vehicle. Must be at least 3 characters long.
+  - `plate` (string, required): The plate number of the vehicle. Must be at least 3 characters long.
+  - `capacity` (number, required): The capacity of the vehicle. Must be at least 1.
+  - `vehicleType` (string, required): The type of the vehicle. Must be one of 'car', 'motorcycle', or 'auto'.
+
+Example:
+```json
+{
+  "fullname": {
+    "firstname": "Jane",
+    "lastname": "Smith"
+  },
+  "email": "jane.smith@example.com",
+  "password": "securepassword",
+  "vehicle": {
+    "color": "Red",
+    "plate": "XYZ123",
+    "capacity": 4,
+    "vehicleType": "car"
+  }
+}
+```
+#### Response (Status Code: 201)
+
+The response will be a JSON object containing the following field:
+
+- `token` (string): The JWT token for the authenticated captain.
+
+Example:
+```json
+{
+  "token": "your_jwt_token_here"
+}
+```
+
+#### Error Response (Status Code: 400)
+
+The error response will be a JSON object containing the following field:
+
+- `errors` (array): An array of error objects.
+
+Example:
+```json
+{
+  "errors": [
+    {
+      "msg": "Invalid Email",
+      "param": "email",
+      "location": "body"
+    },
+    {
+      "msg": "First name must be at least 3 characters long",
+      "param": "fullname",
+      "location": "body"
+    },
+    {
+      "msg": "Password must be at least 6 characters long",
+      "param": "password",
+      "location": "body"
+    },
+    {
+      "msg": "Vehicle color must be at least 3 characters long",
+      "param": "vehicle.color",
+      "location": "body"
+    },
+    {
+      "msg": "Vehicle plate must be at least 3 characters long",
+      "param": "vehicle.plate",
+      "location": "body"
+    },
+    {
+      "msg": "Vehicle capacity must be at least 1",
+      "param": "vehicle.capacity",
+      "location": "body"
+    },
+    {
+      "msg": "Vehicle type must be one of 'car', 'motorcycle', or 'auto'",
+      "param": "vehicle.vehicleType",
+      "location": "body"
+    }
+  ]
 }
 ```

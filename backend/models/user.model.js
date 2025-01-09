@@ -40,21 +40,13 @@ userSchema.methods.generateAuthToken = function () {
 
 // Compare passwords
 userSchema.methods.comparePassword = async function (password) {
-  return await bcrypt.compare(password, this.password);
+  return bcrypt.compare(password, this.password);
 };
 
-// Pre-save hook to hash passwords
-userSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) return next();
-
-  this.password = await bcrypt.hash(this.password, 10);
-  next();
-});
-
-// Static method to hash passwords explicitly (if needed)
+// Static method to hash passwords
 userSchema.statics.hashPassword = async function (password) {
   return await bcrypt.hash(password, 10);
-};
+}
 
 const userModel = mongoose.model('user', userSchema);
 module.exports = userModel;
