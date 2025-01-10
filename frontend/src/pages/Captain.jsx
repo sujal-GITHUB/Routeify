@@ -2,37 +2,34 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
-const Home = () => {
+const Captain = () => {
   const navigate = useNavigate();
 
   const logout = () => {
-    const token = localStorage.getItem('usertoken');
+    const token = localStorage.getItem('captaintoken');
 
     axios
-      .get(`${import.meta.env.VITE_BASE_URL}/users/logout`, {
+      .get(`${import.meta.env.VITE_BASE_URL}/captains/logout`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       })
       .then((response) => {
         if (response.status === 200) {
-          // Remove token only if the response is successful
-          localStorage.removeItem('usertoken');
-          navigate('/login');
+          localStorage.removeItem('captaintoken');
+          navigate('/captain-login');
         }
       })
       .catch((error) => {
         console.error('Logout failed:', error);
-        // Optionally, show an error message here
       });
   };
 
   return (
-    <div>
-      <h1>Home</h1>
+    <div>Captain
       <button className='p-10' onClick={logout}>Logout</button>
     </div>
-  );
-};
+  )
+}
 
-export default Home;
+export default Captain
