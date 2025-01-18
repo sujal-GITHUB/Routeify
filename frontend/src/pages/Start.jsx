@@ -34,7 +34,7 @@ const Start = () => {
 
       {/* Welcome Section */}
       <div className="bg-white p-5 flex flex-col items-center gap-4 rounded-t-lg">
-        <h2 className="text-2xl font-bold text-center">Welcome to Routeify</h2>
+        <h2 className="text-2xl font-bold text-center">Welcome to routeify</h2>
         <Link to='/login' className="bg-black flex text-center justify-center text-white w-full p-2 rounded-md transition">
           Continue
         </Link>
