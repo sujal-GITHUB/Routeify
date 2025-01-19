@@ -1,15 +1,18 @@
 import React from "react";
 
-const VehiclePanel = ({rides, selectedRide, setSelectedRide}) => {
+const VehiclePanel = ({rides, selectedRide, setSelectedRide, setPrice}) => {
   return (
-    <div className="mt-6">
+    <div className="mt-6 mx-1 mb-1">
       <h2 className="font-semibold mb-5">Choose a ride</h2>
       <div className="space-y-3">
         {rides.map((ride) => (
           <button
             key={ride.id}
             type="button"
-            onClick={() => setSelectedRide(ride.id)}
+            onClick={() => {
+              setSelectedRide(ride.id)
+              setPrice(ride.price)
+            }}
             className={`w-full bg-gray-100 p-4 rounded-xl flex items-center justify-between transition-all ${
               selectedRide === ride.id ? "ring-2 ring-black" : ""
             }`}
@@ -24,20 +27,13 @@ const VehiclePanel = ({rides, selectedRide, setSelectedRide}) => {
                   </span>
                 </div>
                 <p className="text-sm text-start">{ride.waitTime} away</p>
-                <p className="text-xs text-gray-600">{ride.description}</p>
+                <p className="text-xs text-gray-600 text-start">{ride.description}</p>
               </div>
             </div>
             <span className="font-semibold">{ride.price}</span>
           </button>
         ))}
       </div>
-
-      <button
-        type="submit"
-        className="w-full bg-black text-white font-semibold py-3 rounded-xl mt-4 transition-opacity hover:opacity-90"
-      >
-        Book Now
-      </button>
     </div>
   );
 };
