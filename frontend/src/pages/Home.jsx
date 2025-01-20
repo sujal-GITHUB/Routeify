@@ -1,5 +1,7 @@
 import React, { useRef, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from 'react-redux';
+import { setRideData } from '../actions/rideActions';
 import axios from "axios";
 import logo from "../assets/logo1.png";
 import gsap from "gsap";
@@ -11,27 +13,29 @@ import bike from "../assets/bike.png";
 import auto from "../assets/auto.png";
 import VehiclePanel from "../components/VehiclePanel";
 import FindCaptains from "../components/FindCaptains";
-import ConfirmRide from "../components/ConfirmRide";
 
 const Home = () => {
+  const dispatch = useDispatch();
   const navigate = useNavigate();
-  const [pickup, setPickup] = useState("");
-  const [destination, setDestination] = useState("");
-  const [price, setPrice] = useState("");
+  
+  // Keep UI states local
   const [panelOpen, setPanelOpen] = useState(false);
   const [activePanel, setActivePanel] = useState(null);
-  const [selectedRide, setSelectedRide] = useState(null);
   const [showRideOptions, setShowRideOptions] = useState(false);
+  const [showFindCaptains, setShowFindCaptains] = useState(false);
+  const [showForm, setShowForm] = useState(true);
+  const [selectedRide, setSelectedRide] = useState(null);
+
+  // Update selector to handle undefined state
+  const rideData = useSelector(state => state.ride) || {};
+  const { pickup = '', destination = '', price = '' } = rideData;
+
   const panelRef = useRef(null);
   const panelClose = useRef(null);
-  const [showFindCaptains, setShowFindCaptains] = useState(false);
   const findCaptainsRef = useRef(null);
   const vehiclePanelRef = useRef(null);
-  const [showForm, setShowForm] = useState(true);
   const formRef = useRef(null);
   const rideOptionsRef = useRef(null);
-  const [showConfirmRide, setShowConfirmRide] = useState(false);
-  const confirmRideRef = useRef(null);
 
   // Handle location input completion
   useEffect(() => {
@@ -53,31 +57,40 @@ const Home = () => {
   }
 }, [pickup, destination]);
 
-  useEffect(() => {
-    let timer;
-    if (showFindCaptains) {
-      timer = setTimeout(() => {
-        const tl = gsap.timeline();
-        
-        tl.to(findCaptainsRef.current, {
-          opacity: 0,
-          height: 0,
-          duration: 0.3,
-          onComplete: () => {
-            setShowFindCaptains(false);
-            setShowConfirmRide(true);
-            setShowRideOptions(false);
-            gsap.fromTo(confirmRideRef.current,
-              { opacity: 0, height: 0 },
-              { opacity: 1, height: "auto", duration: 0.3 }
-            );
-          }
-        });
-      }, 10000);
-    }
+useEffect(() => {
+  let timer;
+  if (showFindCaptains) {
+    timer = setTimeout(() => {
+      const tl = gsap.timeline();
+      
+      // Prepare ride data
+      const rideData = {
+        pickup,
+        destination,
+        price,
+        distance: '2.3 miles', // You can calculate this
+        time: '2 mins',
+        vehicletype: selectedRide
+      };
 
-    return () => clearTimeout(timer);
-  }, [showFindCaptains]);
+      // Dispatch to store
+      dispatch(setRideData(rideData));
+      
+      tl.to(findCaptainsRef.current, {
+        opacity: 0,
+        height: 0,
+        duration: 0.3,
+        onComplete: () => {
+          setShowFindCaptains(false);
+          setShowRideOptions(false);
+          navigate("/riding");
+        }
+      });
+    }, 10000);
+  }
+
+  return () => clearTimeout(timer);
+}, [showFindCaptains, dispatch, pickup, destination, price, selectedRide]);
 
   // Panel animation with proper null checks
   useEffect(() => {
@@ -147,11 +160,9 @@ const Home = () => {
   };
 
   const handleLocationSelect = (location, type) => {
-    if (type === 'pickup') {
-      setPickup(location);
-    } else {
-      setDestination(location);
-    }
+    dispatch(setRideData({
+      [type === 'pickup' ? 'pickup' : 'destination']: location
+    }));
   };
 
   // Reset to initial state
@@ -161,7 +172,6 @@ const Home = () => {
     // Fade out all panels
     tl.to([
       findCaptainsRef.current, 
-      confirmRideRef.current, 
       vehiclePanelRef.current
     ], {
       opacity: 0,
@@ -183,9 +193,7 @@ const Home = () => {
       setActivePanel(null);
       setShowRideOptions(false);
       setSelectedRide(null);
-      setPickup("");
-      setDestination("");
-      setShowConfirmRide(false);
+      dispatch(setRideData({ pickup: "", destination: "" , selectedRide:""}));
       setShowFindCaptains(false);
       setShowForm(true);
     })
@@ -201,12 +209,11 @@ const Home = () => {
     const tl = gsap.timeline();
     
     // Fade out both FindCaptains and ConfirmRide panels
-    tl.to([findCaptainsRef.current, confirmRideRef.current], {
+    tl.to([findCaptainsRef.current], {
       opacity: 0,
       height: 0,
       duration: 0.3,
       onComplete: () => {
-        setShowConfirmRide(false);
         setShowFindCaptains(false);
         setSelectedRide(null);
         setShowForm(true);
@@ -332,7 +339,7 @@ const Home = () => {
                 </div>
                 <input
                   value={pickup}
-                  onChange={(e) => setPickup(e.target.value)}
+                  onChange={(e) => handleLocationSelect(e.target.value, 'pickup')}
                   onFocus={() => handleInputFocus('pickup')}
                   onClick={handleInputClick}
                   type="text"
@@ -344,7 +351,7 @@ const Home = () => {
 
                 <input
                   value={destination}
-                  onChange={(e) => setDestination(e.target.value)}
+                  onChange={(e) => handleLocationSelect(e.target.value, 'destination')}
                   onFocus={() => handleInputFocus('destination')}
                   onClick={handleInputClick}
                   type="text"
@@ -357,25 +364,6 @@ const Home = () => {
             </form>
           </div>
 
-          <div ref={confirmRideRef} 
-            style={{ 
-              opacity: showConfirmRide ? 1 : 0,
-              height: showConfirmRide ? 'auto' : 0,
-              overflow: 'hidden',
-              display: showConfirmRide ? 'block' : 'none'
-            }}
-          >
-            {showConfirmRide && (
-              <ConfirmRide 
-                pickup={pickup}
-                destination={destination}
-                price={price}
-                selectedRide={selectedRide}
-                setSelectedRide={handleCancelRide}
-              />
-            )}
-          </div>
-
           <div ref={vehiclePanelRef} 
             style={{ 
               opacity: showRideOptions && !showFindCaptains ? 1 : 0,
@@ -385,10 +373,8 @@ const Home = () => {
           >
             {showRideOptions && !showFindCaptains && (
               <VehiclePanel 
-                rides={rides} 
-                selectedRide={selectedRide} 
-                setSelectedRide={setSelectedRide} 
-                setPrice={setPrice}
+                rides={rides}
+                setSelectedRide={setSelectedRide}
               />
             )}
           </div>

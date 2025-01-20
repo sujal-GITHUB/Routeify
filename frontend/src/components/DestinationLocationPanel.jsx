@@ -1,6 +1,10 @@
 import React from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { setRideData } from '../actions/rideActions';
 
-const LocationSearchPanel = ({destination,setDestination}) => {
+const LocationSearchPanel = () => {
+  const dispatch = useDispatch();
+  const { destination } = useSelector(state => state.ride);
 
   const locations = [
     { location: "Civil Lines, Ludhiana", state: "Ludhiana, Punjab" },
@@ -21,7 +25,7 @@ const LocationSearchPanel = ({destination,setDestination}) => {
 
   // Function to handle destination selection
   const submitDestination = (location) => {
-    setDestination(location); 
+    dispatch(setRideData({ destination: location }));
   };
 
   return (

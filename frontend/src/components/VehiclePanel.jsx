@@ -1,6 +1,19 @@
 import React from "react";
+import { useDispatch, useSelector } from 'react-redux';
+import { setRideData } from '../actions/rideActions';
 
-const VehiclePanel = ({rides, selectedRide, setSelectedRide, setPrice}) => {
+const VehiclePanel = ({ rides, setSelectedRide }) => {
+  const dispatch = useDispatch();
+  const { vehicletype, price } = useSelector(state => state.ride);
+
+  const handleRideSelect = (ride) => {
+    setSelectedRide(ride.id);
+    dispatch(setRideData({ 
+      vehicletype: ride.id,
+      price: ride.price 
+    }));
+  };
+
   return (
     <div className="mt-6 mx-1 mb-1">
       <h2 className="font-semibold mb-5">Choose a ride</h2>
@@ -9,12 +22,9 @@ const VehiclePanel = ({rides, selectedRide, setSelectedRide, setPrice}) => {
           <button
             key={ride.id}
             type="button"
-            onClick={() => {
-              setSelectedRide(ride.id)
-              setPrice(ride.price)
-            }}
+            onClick={() => handleRideSelect(ride)}
             className={`w-full bg-gray-100 p-4 rounded-xl flex items-center justify-between transition-all ${
-              selectedRide === ride.id ? "ring-2 ring-black" : ""
+              vehicletype === ride.id ? "ring-2 ring-black" : ""
             }`}
           >
             <div className="flex items-center gap-4">

@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { useSelector } from 'react-redux';
 import car from "../assets/car.png";
 import bike from "../assets/bike.png";
 import auto from "../assets/auto.png";
 
-const FindCaptains = ({ pickup, destination, selectedRide, price, setSelectedRide }) => {
+const FindCaptains = ({ setSelectedRide }) => {
   const [countdown, setCountdown] = useState(10);
+  const { pickup, destination, vehicletype, price } = useSelector(state => state.ride);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -26,10 +28,10 @@ const FindCaptains = ({ pickup, destination, selectedRide, price, setSelectedRid
         Finding captains nearby... {countdown}s
       </h1>
       <div className="w-full flex flex-col items-center space-y-4">
-        {selectedRide && rideImages[selectedRide] && (
+        {vehicletype && rideImages[vehicletype] && (
           <img
-            src={rideImages[selectedRide]}
-            alt={`${selectedRide} image`}
+            src={rideImages[vehicletype]}
+            alt={`${vehicletype} image`}
             className="h-60 object-contain w-full max-w-md"
           />
         )}
