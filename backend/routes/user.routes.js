@@ -21,4 +21,6 @@ router.get('/profile',authMiddleware.authUser ,userController.getUserProfile)
 
 router.get('/logout',authMiddleware.authUser, userController.logoutUser)
 
+router.get('/payment', authMiddleware.authUser, userController.makePaymentRequest)
+
 module.exports = router

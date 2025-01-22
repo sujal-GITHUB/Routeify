@@ -30,6 +30,9 @@ const CaptainLogin = () => {
         localStorage.setItem('captaintoken',response.data.token)
         navigate('/captain');
       }
+    setTimeout(() => {
+      localStorage.removeItem('captaintoken');
+    }, 3600000); // 1 hour in milliseconds
     } catch (err) {
       if (err.response) {
         switch (err.response.status) {

@@ -30,7 +30,7 @@ const Riding = () => {
   };
 
   return (
-    <div className="h-screen font-lexend relative">
+    <div className="h-screen font-lexend relative overflow-hidden">
       <div className="absolute inset-0 -z-10">
         <img src="/image-copy.png" alt="Background" className="w-full h-full object-cover" />
       </div>
@@ -47,7 +47,7 @@ const Riding = () => {
             <i className={`text-2xl ${isPanelDown ? 'ri-arrow-up-wide-fill' : 'ri-arrow-down-wide-fill'}`}></i>
           </button>
           <div className="flex justify-center items-center mb-5">
-            <div className='h-[520px]'>
+            <div className='h-[520px] overflow-hidden'>
               <ConfirmRide />
             </div>
           </div>

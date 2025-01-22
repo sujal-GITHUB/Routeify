@@ -99,3 +99,10 @@ const blacklistToken = require('../models/blacklistToken.model')
     res.clearCookie('token')
     res.status(200).json({message: 'Logged out'})
   }
+
+  module.exports.makePaymentRequest = makePaymentRequest = async(req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+  }

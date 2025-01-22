@@ -30,6 +30,9 @@ const UserLogin = () => {
         localStorage.setItem('usertoken',response.data.token)
         navigate('/home');
       }
+      setTimeout(() => {
+        localStorage.removeItem('usertoken');
+      }, 3600000); // 1 hour in milliseconds
     } catch (err) {
       if (err.response) {
         switch (err.response.status) {
