@@ -8,48 +8,39 @@ const CaptainRiding = () => {
   const navigate = useNavigate();
   const panelRef = useRef();
   const panelContentRef = useRef();
-  const panelClose = useRef(null);
   const [isPanelDown, setIsPanelDown] = useState(false);
-  const [isOnline, setIsOnline] = useState(false);
 
-  const panelDown = () => {
-    setIsPanelDown(true);
+  const togglePanel = () => {
     const tl = gsap.timeline();
-    tl.to(panelRef.current, {
-      height: "10%",
-      duration: 0.1,
-      ease: "power3.out"
-    })
-    .to(panelContentRef.current, {
-      duration: 0.3,
-      ease: "power2.out"
-    }, "-=0.3");
+    
+    if (isPanelDown) {
+      tl.to(panelRef.current, {
+        height: "76%",
+        duration: 0.1,
+        ease: "power3.out"
+      })
+      .to(panelContentRef.current, {
+        opacity: 1,
+        ease: "power2.out"
+      }, "-=0.3");
+    } else {
+      tl.to(panelContentRef.current, {
+        opacity: 1,
+        ease: "power2.in"
+      })
+      .to(panelRef.current, {
+        height: "17%",
+        duration: 0.1,
+        ease: "power3.out"
+      }, "-=0.3");
+    }
+    setIsPanelDown(!isPanelDown);
   };
-
-  const panelUp = () => {
-    setIsPanelDown(false);
-    const tl = gsap.timeline();
-    tl.to(panelRef.current, {
-      height: "80%",
-      duration: 0.1,
-      ease: "power3.out"
-    })
-    .to(panelContentRef.current, {
-      opacity: 1,
-      duration: 0.3,
-      ease: "power2.out"
-    }, "-=0.3");
-  };
-
 
   return (
     <div className="h-screen font-lexend relative">
       <div className="absolute inset-0 -z-10">
-        <img
-          src="/image.png"
-          alt="Background"
-          className="w-full h-full object-cover"
-        />
+        <img src="/image-copy.png" alt="Background" className="w-full h-full object-cover" />
       </div>
 
       <div className="p-5">
@@ -59,13 +50,18 @@ const CaptainRiding = () => {
       <div className="absolute inset-0 flex flex-col justify-end">
         <div 
           ref={panelRef}
-          className="bg-white p-5 rounded-t-2xl transition-all duration-500"
+          className="bg-white px-5 py-2 rounded-t-2xl transition-all duration-500"
           style={{ height: "80%" }}
         >
+          <button 
+            onClick={togglePanel}
+            className="w-full flex justify-center text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            <i className={`text-2xl ${isPanelDown ? 'ri-arrow-up-s-line' : 'ri-arrow-down-s-line'}`} />
+          </button>
+
           <div ref={panelContentRef} className="h-full">
-            
-            {/* Recent Rides */}
-              <UserDetails/>
+            <UserDetails />
           </div>
         </div>
       </div>

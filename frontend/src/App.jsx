@@ -13,6 +13,7 @@ import UserProtectedWrapper from './pages/UserProtectedWrapper';
 import CaptainProtectedWrapper from './pages/CaptainProtectedWrapper'
 import Riding from './pages/Riding';
 import CaptainRiding from './pages/CaptainRiding';
+import RideSuccess from './pages/RideSuccess';
 
 const App = () => {
   return (
@@ -38,6 +39,11 @@ const App = () => {
               <CaptainRiding/>
             </CaptainProtectedWrapper>
           }/>
+          <Route path="/ride-success" element={
+            <CaptainProtectedWrapper>
+              <RideSuccess/>
+            </CaptainProtectedWrapper>
+          } />
           <Route path="/login" element={<UserLogin />} />
           <Route path="/signup" element={<UserSignUp />} />
           <Route path="/captain-signup" element={<CaptainSignup />} />

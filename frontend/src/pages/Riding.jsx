@@ -49,6 +49,7 @@ const Riding = () => {
           <div className="flex justify-center items-center mb-5">
             <div className='h-[520px] overflow-hidden'>
               <ConfirmRide />
+              <RidePopup />
             </div>
           </div>
         </div>

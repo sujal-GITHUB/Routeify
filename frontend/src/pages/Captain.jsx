@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import gsap from "gsap";
 import axios from "axios";
@@ -12,8 +12,11 @@ const Captain = () => {
   const panelRef = useRef();
   const panelContentRef = useRef();
   const panelClose = useRef(null);
+  const ridePopupRef = useRef();
+  const confirmRideRef = useRef();
   const [isPanelDown, setIsPanelDown] = useState(false);
   const [isOnline, setIsOnline] = useState(false);
+  const [showConfirmRide, setShowConfirmRide] = useState(false);
 
   const panelDown = () => {
     setIsPanelDown(true);
@@ -64,9 +67,39 @@ const Captain = () => {
     }
   };
 
-  const onAccept = function() {
-    navigate('/captain-riding')
-  }
+  const handleAccept = () => {
+    const tl = gsap.timeline();
+    
+    // Hide ride popup
+    tl.to(ridePopupRef.current, {
+      opacity: 0,
+      scale: 0.95,
+      duration: 0.3,
+      onComplete: () => {
+        setShowConfirmRide(true);
+      }
+    });
+  };
+
+  useEffect(() => {
+    // Show confirm ride popup after state update
+    if (showConfirmRide && confirmRideRef.current) {
+      gsap.fromTo(confirmRideRef.current,
+        { 
+          opacity: 0,
+          scale: 0.95,
+          y: 20
+        },
+        { 
+          opacity: 1,
+          scale: 1,
+          y: 0,
+          duration: 0.3,
+          ease: "power2.out"
+        }
+      );
+    }
+  }, [showConfirmRide]);
 
   return (
     <div className="h-screen font-lexend relative">
@@ -151,7 +184,16 @@ const Captain = () => {
             
 
             {/* Recent Rides */}
-              <ConfirmRidePopup onAccept={onAccept}/>
+            {!showConfirmRide ? (
+              <div ref={ridePopupRef}>
+                <RidePopup onAccept={handleAccept} />
+              </div>
+            ) : (
+              <div ref={confirmRideRef} style={{ opacity: 0 }}>
+                <ConfirmRidePopup onAccept={() => navigate('/captain-riding')} />
+              </div>
+            )}
+              
           </div>
         </div>
       </div>
