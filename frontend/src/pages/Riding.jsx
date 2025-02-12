@@ -3,6 +3,7 @@ import ConfirmRide from '../components/ConfirmRide'
 import logo from '../assets/logo1.png'
 import gsap from "gsap";
 import { useRef } from 'react';
+import RidePopup from '../components/RidePopup'
 
 const Riding = () => {
   const panelRef = useRef();
