@@ -1,54 +1,87 @@
-import React from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { setRideData } from '../actions/rideActions';
+import React, { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import axios from "axios";
+import { setRideData } from "../actions/rideActions";
 
-const LocationSearchPanel = () => {
+const PickupLocationPanel = ({ input, setInput, setPickup }) => {
   const dispatch = useDispatch();
-  const rideData = useSelector(state => state.ride) || {};
-  const { pickup = '' } = rideData;
-  
-  const locations = [
-    { location: "Civil Lines, Ludhiana", state: "Ludhiana, Punjab" },
-    { location: "Model Town, Ludhiana", state: "Ludhiana, Punjab" },
-    { location: "Ferozepur Road, Ludhiana", state: "Ludhiana, Punjab" },
-    { location: "Bhattian, Ludhiana", state: "Ludhiana, Punjab" },
-    { location: "Dugri, Ludhiana", state: "Ludhiana, Punjab" },
-    { location: "Sadar Bazar, Ludhiana", state: "Ludhiana, Punjab" },
-    { location: "Kitchlu Nagar, Ludhiana", state: "Ludhiana, Punjab" },
-    { location: "Charan Bagh, Ludhiana", state: "Ludhiana, Punjab" },
-    { location: "Guru Nanak Nagar, Ludhiana", state: "Ludhiana, Punjab" },
-    { location: "Jamalpur, Ludhiana", state: "Ludhiana, Punjab" },
-    { location: "Bihar Colony, Ludhiana", state: "Ludhiana, Punjab" },
-    { location: "Mandi, Ludhiana", state: "Ludhiana, Punjab" },
-    { location: "Sherpur, Ludhiana", state: "Ludhiana, Punjab" },
-    { location: "BRS Nagar, Ludhiana", state: "Ludhiana, Punjab" }
-  ];
+  const { pickup = "" } = useSelector((state) => state.ride) || {};
+  const [locations, setLocations] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  const submitPickup = (location) => {
-    dispatch(setRideData({ pickup: location }));
+  // Fetch suggestions from the backend using the input value.
+  const fetchLocations = async () => {
+    if (!input) {
+      setLocations([]);
+      return;
+    }
+    setLoading(true);
+    try {
+      const response = await axios.get(
+        `${import.meta.env.VITE_BASE_URL}/maps/get-suggestions`,
+        {
+          params: { address: input },
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("usertoken")}`,
+          },
+        }
+      );
+      // If the API returns an array directly, use it.
+      const suggestions = Array.isArray(response.data)
+        ? response.data
+        : response.data.locations || [];
+      setLocations(suggestions);
+      setError(null);
+    } catch (err) {
+      setError("Failed to fetch locations");
+      console.error(err);
+    }
+    setLoading(false);
+  };
+
+  // Debounce the fetch call whenever "input" changes.
+  useEffect(() => {
+    const debounceTimeout = setTimeout(() => {
+      fetchLocations();
+    }, 500);
+    return () => clearTimeout(debounceTimeout);
+  }, [input]);
+
+  // Handle selecting a pickup location.
+  const handleSelectPickup = (location) => {
+    if (setPickup) {
+      setPickup(location);
+    } else {
+      dispatch(setRideData({ pickup: location }));
+    }
+    setInput(location);
+    setLocations([]);
   };
 
   return (
-    <div className="p-3 rounded-t-2xl">
-      <div className="flex items-center gap-3 mb-3 w-full">
-        <div className="flex flex-col w-full">
-          {locations.map((item, index) => (
-            <div
-              key={index}
-              onClick={() => submitPickup(item.location)}  
-              className={`mb-3 bg-white w-full p-3 rounded-xl border-2 border-transparent hover:border-black active:border-black transition-all duration-300 ${pickup === item.location ? 'border-black' : ''}`}
-            >
-              <div className="flex items-center gap-2 w-full">
-                <i className="ri-map-pin-3-line text-gray-600"></i>
-                <h4 className="text-sm font-medium text-gray-700">{item.location}</h4>
-              </div>
-              <h5 className="text-xs font-medium pl-6 text-gray-500">{item.state}</h5>
-            </div>
-          ))}
+    <div className="p-3">
+      {loading && <p className="text-gray-600">Loading locations...</p>}
+      {error && <p className="text-red-600">{error}</p>}
+
+      {!loading && !error && locations.map((item, index) => (
+        <div
+          key={index}
+          onClick={() => handleSelectPickup(item)}
+          className={`mb-3 bg-white w-full p-3 rounded-xl border-2 border-transparent hover:border-black active:border-black transition-all duration-300 ${
+            pickup === item ? "border-black" : ""
+          }`}
+        >
+          <div className="flex items-center gap-2 w-full">
+            <i className="ri-map-pin-3-line text-gray-600"></i>
+            <h4 className="text-sm font-medium text-gray-700">
+              {item}
+            </h4>
+          </div>
         </div>
-      </div>
+      ))}
     </div>
   );
 };
 
-export default LocationSearchPanel;
+export default PickupLocationPanel;

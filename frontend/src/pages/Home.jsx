@@ -25,6 +25,8 @@ const Home = () => {
   const [showFindCaptains, setShowFindCaptains] = useState(false);
   const [showForm, setShowForm] = useState(true);
   const [selectedRide, setSelectedRide] = useState(null);
+  const [input, setInput] = useState("");
+  const [destinationInput, setDestinationInput] = useState("");
 
   // Update selector to handle undefined state
   const rideData = useSelector(state => state.ride) || {};
@@ -163,6 +165,11 @@ useEffect(() => {
     dispatch(setRideData({
       [type === 'pickup' ? 'pickup' : 'destination']: location
     }));
+  };
+
+  const handleDestinationSelect = (location) => {
+    dispatch(setRideData({ destination: location }));
+    setDestinationInput(location);
   };
 
   // Reset to initial state
@@ -338,26 +345,44 @@ useEffect(() => {
                   </div>
                 </div>
                 <input
-                  value={pickup}
-                  onChange={(e) => handleLocationSelect(e.target.value, 'pickup')}
-                  onFocus={() => handleInputFocus('pickup')}
+                  value={activePanel === "pickup" ? input : pickup}
+                  onChange={(e) => {
+                    if (activePanel === "pickup") {
+                      setInput(e.target.value);
+                    } else {
+                      handleLocationSelect(e.target.value, "pickup");
+                    }
+                  }}
+                  onFocus={() => {
+                    handleInputFocus("pickup");
+                    setInput(pickup); // Sync the local input with the current pickup value
+                  }}
                   onClick={handleInputClick}
                   type="text"
                   placeholder="Enter your pickup location"
                   className={`w-full bg-gray-100 pl-10 p-3 mt-1 rounded-xl text-base transition-all ${
-                    activePanel === 'pickup' ? 'ring-2 ring-black' : ''
+                    activePanel === "pickup" ? "ring-2 ring-black" : ""
                   }`}
                 />
 
                 <input
-                  value={destination}
-                  onChange={(e) => handleLocationSelect(e.target.value, 'destination')}
-                  onFocus={() => handleInputFocus('destination')}
+                  value={activePanel === "destination" ? destinationInput : destination}
+                  onChange={(e) => {
+                    if (activePanel === "destination") {
+                      setDestinationInput(e.target.value);
+                    } else {
+                      handleLocationSelect(e.target.value, "destination");
+                    }
+                  }}
+                  onFocus={() => {
+                    handleInputFocus("destination");
+                    setDestinationInput(destination); // Sync local destination input.
+                  }}
                   onClick={handleInputClick}
                   type="text"
                   placeholder="Enter your destination"
                   className={`w-full bg-gray-100 pl-10 p-3 mb-1 rounded-xl text-base mt-3 transition-all ${
-                    activePanel === 'destination' ? 'ring-2 ring-black' : ''
+                    activePanel === "destination" ? "ring-2 ring-black" : ""
                   }`}
                 />
               </div>
@@ -406,14 +431,15 @@ useEffect(() => {
         >
           {activePanel === 'pickup' && (
             <PickupSearchPanel
-              pickup={pickup}
+              input={input}
+              setInput={setInput}
               setPickup={(loc) => handleLocationSelect(loc, 'pickup')}
             />
           )}
           {activePanel === 'destination' && (
             <DestinationSearchPanel
-              destination={destination}
-              setDestination={(loc) => handleLocationSelect(loc, 'destination')}
+              destination={destinationInput}
+              setDestination={(loc) => handleDestinationSelect(loc)}
             />
           )}
         </div>
