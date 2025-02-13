@@ -12,8 +12,19 @@ async function getFare(pickup, destination) {
         throw new Error('Error occurred while fetching distance and duration');
     }
 
-    const distanceInKm = distanceTime.distance.value / 1000 || 0;
-    const durationInMin = distanceTime.duration.value / 60 || 0;
+    const distanceInKm = parseFloat(distanceTime.distance.replace(/[^\d.]/g, ""));
+    const durationParts = distanceTime.duration.match(/(\d+) hour[s]? (\d+) min[s]?/);
+    let durationInMin = 0;
+
+    if (durationParts) {
+        durationInMin = parseInt(durationParts[1]) * 60 + parseInt(durationParts[2]);
+    } else {
+        durationInMin = parseInt(distanceTime.duration.replace(/[^\d]/g, ""));
+    }
+
+    if (isNaN(distanceInKm) || isNaN(durationInMin)) {
+        throw new Error('Invalid distance or duration data');
+    }
 
     const baseFare = { auto: 30, car: 50, motorcycle: 20 };
     const perKmRate = { auto: 10, car: 15, motorcycle: 8 };
@@ -25,6 +36,8 @@ async function getFare(pickup, destination) {
         motorcycle: Math.round(baseFare.motorcycle + distanceInKm * perKmRate.motorcycle + durationInMin * perMinuteRate.motorcycle),
     };
 }
+
+module.exports.getFare = getFare
 
 async function getOtp(num){
     const otp = crypto.randomInt(Math.pow(10, num-1), Math.pow(10, num)).toString()

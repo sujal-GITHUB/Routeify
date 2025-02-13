@@ -444,3 +444,274 @@ Example:
   "message": "Unauthorized"
 }
 ```
+
+## Ride Endpoints Documentation
+
+### Create Ride
+
+#### POST /rides/create
+
+This endpoint is used to create a new ride.
+
+- **Controller**: `ride.controller.js`
+- **Service**: `ride.service.js`
+
+#### Request Body
+
+The request body should be a JSON object with the following fields:
+
+- `pickup` (string, required): The location where the ride will start. Must be at least 3 characters long.
+- `destination` (string, required): The destination of the ride. Must be at least 3 characters long.
+- `vehicleType` (string, required): The type of vehicle. Must be one of 'auto', 'car', or 'motorcycle'.
+
+Example:
+```json
+{
+  "pickup": "123 Main St",
+  "destination": "456 Elm St",
+  "vehicleType": "car"
+}
+```
+
+#### Response (Status Code: 201)
+
+The response will be a JSON object containing the following field:
+
+- `rideId` (string): The ID of the newly created ride.
+
+Example:
+```json
+{
+  "rideId": "new_ride_id"
+}
+```
+
+#### Error Response (Status Code: 400)
+
+The error response will be a JSON object containing the following field:
+
+- `errors` (array): An array of error objects.
+
+Example:
+```json
+{
+  "errors": [
+    {
+      "msg": "Invalid pickup location",
+      "param": "pickup",
+      "location": "body"
+    },
+    {
+      "msg": "Invalid destination location",
+      "param": "destination",
+      "location": "body"
+    },
+    {
+      "msg": "Invalid vehicle type",
+      "param": "vehicleType",
+      "location": "body"
+    }
+  ]
+}
+```
+
+### Get Fare
+
+#### POST /rides/fare
+
+This endpoint is used to get the fare estimate for a ride.
+
+- **Controller**: `ride.controller.js`
+- **Service**: `ride.service.js`
+
+#### Query Parameters
+
+- `pickup` (string, required): The pickup location. Must be at least 3 characters long.
+- `destination` (string, required): The destination location. Must be at least 3 characters long.
+
+Example:
+```
+GET /rides/fare?pickup=123%20Main%20St&destination=456%20Elm%20St
+```
+
+#### Response (Status Code: 200)
+
+The response will be a JSON object containing fare estimates for different vehicle types.
+
+Example:
+```json
+{
+  "auto": 50,
+  "car": 70,
+  "motorcycle": 30
+}
+```
+
+#### Error Response (Status Code: 400)
+
+The error response will be a JSON object containing the following field:
+
+- `errors` (array): An array of error objects.
+
+Example:
+```json
+{
+  "errors": [
+    {
+      "msg": "Invalid pickup location",
+      "param": "pickup",
+      "location": "query"
+    },
+    {
+      "msg": "Invalid destination location",
+      "param": "destination",
+      "location": "query"
+    }
+  ]
+}
+```
+
+## Map Endpoints Documentation
+
+### Get Coordinates
+
+#### GET /map/get-coordinates
+
+This endpoint is used to retrieve the coordinates for a given address.
+
+- **Controller**: `map.controller.js`
+- **Service**: `maps.service.js`
+
+#### Query Parameters
+
+- `address` (string, required): The address to geocode. Must be at least 3 characters long.
+
+Example:
+```
+GET /map/get-coordinates?address=123%20Main%20St
+```
+
+#### Response (Status Code: 200)
+
+The response will be a JSON object containing the coordinates and formatted address.
+
+Example:
+```json
+{
+  "latitude": 40.7128,
+  "longitude": -74.0060,
+  "formatted_address": "123 Main St, New York, NY"
+}
+```
+
+#### Error Response (Status Code: 400)
+
+The error response will be a JSON object containing the following field:
+
+- `errors` (array): An array of error objects.
+
+Example:
+```json
+{
+  "errors": [
+    {
+      "msg": "Address is required",
+      "param": "address",
+      "location": "query"
+    }
+  ]
+}
+```
+
+### Get Distance and Time
+
+#### GET /map/get-distance-time
+
+This endpoint is used to get the distance and time between two locations.
+
+- **Controller**: `map.controller.js`
+- **Service**: `maps.service.js`
+
+#### Query Parameters
+
+- `origin` (string, required): The starting location.
+- `destination` (string, required): The target location.
+
+Example:
+```
+GET /map/get-distance-time?origin=123%20Main%20St&destination=456%20Elm%20St
+```
+
+#### Response (Status Code: 200)
+
+The response will be a JSON object containing the distance and duration.
+
+Example:
+```json
+{
+  "distance": "5.2 km",
+  "duration": "15 mins"
+}
+```
+
+#### Error Response (Status Code: 400)
+
+The error response will be a JSON object containing the following field:
+
+- `message` (string): The error message.
+
+Example:
+```json
+{
+  "message": "Both origin and destination are required."
+}
+```
+
+### Get Suggestions
+
+#### GET /map/get-suggestions
+
+This endpoint is used to get address suggestions based on user input.
+
+- **Controller**: `map.controller.js`
+- **Service**: `maps.service.js`
+
+#### Query Parameters
+
+- `address` (string, required): The address input for suggestions. Must be at least 3 characters long.
+
+Example:
+```
+GET /map/get-suggestions?address=123%20Main%20St
+```
+
+#### Response (Status Code: 200)
+
+The response will be a JSON array of suggested addresses.
+
+Example:
+```json
+[
+  "123 Main St, New York, NY",
+  "124 Main St, New York, NY"
+]
+```
+
+#### Error Response (Status Code: 400)
+
+The error response will be a JSON object containing the following field:
+
+- `errors` (array): An array of error objects.
+
+Example:
+```json
+{
+  "errors": [
+    {
+      "msg": "Address is required",
+      "param": "address",
+      "location": "query"
+    }
+  ]
+}
+```

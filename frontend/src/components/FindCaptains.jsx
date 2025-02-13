@@ -38,7 +38,7 @@ const FindCaptains = ({ setSelectedRide }) => {
         <div className="pt-4 w-full border-t border-gray-300 text-gray-700 space-y-1 px-0">
           <p className="text-sm"><strong>Pickup :</strong> {pickup}</p>
           <p className="text-sm"><strong>Destination :</strong> {destination}</p>
-          <p className="text-sm"><strong>Price :</strong> {price}</p>
+          <p className="text-sm"><strong>Price :</strong> ₹{price}</p>
         </div>
         <button onClick={setSelectedRide} className="bg-red-500 hover:bg-red-600 text-white w-full py-3 px-4 rounded-md transition">
           Cancel ride

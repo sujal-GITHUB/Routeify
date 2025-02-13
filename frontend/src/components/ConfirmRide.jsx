@@ -1,85 +1,148 @@
-import React, { useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { setRideData } from '../actions/rideActions';
-import gsap from 'gsap';
-import { useNavigate } from 'react-router-dom';
-import { useEffect } from 'react';
-import payment_success from '../assets/payment-success.png';
-import payment_error from '../assets/payment-error.png';
+import React, { useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { setRideData } from "../actions/rideActions";
+import gsap from "gsap";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import payment_success from "../assets/payment-success.png";
+import payment_error from "../assets/payment-error.png";
 
 const ConfirmRide = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState(null);
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { pickup, destination, price, distance, time } = useSelector(state => state.ride);
+  const { pickup, destination, price, distance, time, vehicletype } =
+    useSelector((state) => state.ride);
 
   useEffect(() => {
-    if (!pickup || pickup === '') {
-      navigate('/home');
+    if (!pickup || pickup === "") {
+      navigate("/home");
+      return;
     }
-  }, [pickup, navigate]);
+
+    const fetchDistanceTime = async () => {
+      try {
+        const response = await axios.get(
+          `${import.meta.env.VITE_BASE_URL}/maps/get-distance-time`,
+          {
+            params: { origin: pickup, destination: destination },
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("usertoken")}`,
+            },
+          }
+        );
+
+        dispatch(
+          setRideData({
+            distance: response.data.distance,
+            time: response.data.duration,
+          })
+        );
+      } catch (error) {
+        console.error("Error fetching distance and time:", error);
+      }
+    };
+
+    fetchDistanceTime();
+  }, [pickup, destination, navigate]);
 
   const handleCancelRide = () => {
     const tl = gsap.timeline();
-    
-    tl.to('.ride-details', {
+    tl.to(".ride-details", {
       opacity: 0,
       height: 0,
       duration: 0.3,
       onComplete: () => {
-        dispatch(setRideData({
-          pickup: '',
-          destination: '',
-          price: '',
-          vehicletype: '',
-        }));
+        dispatch(
+          setRideData({
+            pickup: "",
+            destination: "",
+            price: "",
+            vehicletype: "",
+          })
+        );
         navigate("/home");
-      }
+      },
     });
   };
 
   const makePayment = async () => {
     try {
       setIsProcessing(true);
-      // Simulate API call
-      const response = await new Promise((resolve, reject) => {
-        setTimeout(() => {
-          const success = Math.random() > 0.3;
-          if (success) {
-            resolve({ status: 'success' });
-          } else {
-            reject(new Error('Payment failed'));
-          }
-        }, 2000);
-      });
 
-      if (response.status === 'success') {
-        setPaymentStatus('success');
-        dispatch(setRideData({
-          ...rideData,
-          paymentComplete: true,
-          paymentTime: new Date().toISOString()
-        }));
-        
-        setTimeout(() => {
-          navigate('/riding');
-        }, 1500);
+      // 1️⃣ Create an order on the backend
+      const { data } = await axios.post(
+        `${import.meta.env.VITE_BASE_URL}/payments/create-order`,
+        { amount: price, currency: "INR" },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("usertoken")}`,
+          },
+        }
+      );
+
+      if (!data.success || !data.order) {
+        throw new Error("Failed to create order");
       }
+
+      // 2️⃣ Initialize Razorpay Payment
+      const options = {
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+        amount: data.order.amount,
+        currency: data.order.currency,
+        name: "Routeify",
+        description: "Ride Payment",
+        order_id: data.order.id,
+        handler: async function (response) {
+          console.log("Payment Success:", response);
+
+          // 3️⃣ Verify Payment on Backend
+          const verifyResponse = await axios.post(
+            `${import.meta.env.VITE_BASE_URL}/payments/verify-payment`,
+            response
+          );
+
+          if (verifyResponse.data.success) {
+            setPaymentStatus("success");
+            dispatch(
+              setRideData((prev) => ({
+                ...prev,
+                paymentComplete: true,
+                paymentTime: new Date().toISOString(),
+              }))
+            );
+
+            setTimeout(() => navigate("/riding"), 1500);
+          } else {
+            setPaymentStatus("error");
+          }
+        },
+        prefill: {
+          name: "John Cena",
+          email: "john@example.com",
+          contact: "9999999999",
+        },
+        theme: { color: "#3399cc" },
+      };
+
+      const razorpay = new window.Razorpay(options);
+      razorpay.open();
+      razorpay.on("payment.failed", function (response) {
+        console.error("Payment Failed:", response.error);
+        setPaymentStatus("error");
+      });
     } catch (error) {
-      console.error('Payment failed:', error);
-      setPaymentStatus('error');
-      setTimeout(() => {
-        setPaymentStatus(null);
-        setIsProcessing(false);
-      }, 2000);
+      console.error("Payment failed:", error);
+      setPaymentStatus("error");
+    } finally {
+      setTimeout(() => setIsProcessing(false), 2000);
     }
   };
 
   return (
     <div className="w-full flex flex-col items-center bg-gray-100 p-5 rounded-xl animate-fade-in">
       <div className="ride-details w-full">
-        {/* Header */}
         <div className="w-full flex justify-between items-center mb-4">
           <h1 className="text-xl font-bold text-black">Reaching to you in</h1>
           <div className="bg-black text-white rounded-full px-4 py-1 text-base">
@@ -87,10 +150,8 @@ const ConfirmRide = () => {
           </div>
         </div>
 
-        {/* Divider */}
         <div className="h-[2px] w-full bg-gray-300 mb-4"></div>
 
-        {/* Driver Info */}
         <div className="w-full flex items-center space-x-4 mb-4">
           <img
             className="h-16 w-16 rounded-full object-cover border-2 border-gray-200"
@@ -122,32 +183,89 @@ const ConfirmRide = () => {
           </div>
         </div>
 
-        {/* Divider */}
         <div className="h-[2px] w-full bg-gray-300 mb-4"></div>
 
-        {/* Ride Details */}
         <div className="w-full text-gray-700 space-y-1">
-          <p className="text-sm"><strong>From:</strong> {pickup}</p>
-          <p className="text-sm"><strong>To:</strong> {destination}</p>
-          <p className="text-sm"><strong>Total Distance:</strong> {distance}</p>
-          <p className="text-sm"><strong>Total Time:</strong> {time}</p>
-          <p className="text-sm"><strong>Total Price:</strong> <span className="text-green-600">{price}</span></p>
+          <p className="text-sm">
+            <strong>From:</strong> {pickup}
+          </p>
+          <p className="text-sm">
+            <strong>To:</strong> {destination}
+          </p>
+          <p className="text-sm">
+            <strong>Total Distance:</strong> {distance}
+          </p>
+          <p className="text-sm">
+            <strong>Total Time:</strong> {time}
+          </p>
+          <p className="text-sm">
+            <strong>Total Price:</strong>{" "}
+            <span className="text-green-600">₹{price}</span>
+          </p>
         </div>
 
-        <div className='flex gap-2'>
-        <button 
-          onClick={handleCancelRide}
-          className="mt-5 bg-red-500 hover:bg-red-600 text-white w-1/2 py-3 px-4 rounded-md transition"
-        >
-          Cancel Ride
-        </button>
-        <button 
-          onClick={makePayment}
-          className="mt-5 bg-green-500 hover:bg-green-600 text-white w-1/2 py-3 px-4 rounded-md transition"
-        >
-          Pay {price}
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={handleCancelRide}
+            className="mt-5 bg-red-500 hover:bg-red-600 text-white w-1/2 py-3 px-4 rounded-md transition"
+          >
+            Cancel Ride
+          </button>
+          <button
+            onClick={makePayment}
+            className="mt-5 bg-green-500 hover:bg-green-600 text-white w-1/2 py-3 px-4 rounded-md transition flex items-center justify-center"
+            disabled={isProcessing}
+          >
+            {isProcessing ? (
+              <svg
+                className="animate-spin h-5 w-5 mr-2 text-white"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8v8H4z"
+                ></path>
+              </svg>
+            ) : (
+              `Pay ₹${price}`
+            )}
+          </button>
         </div>
+
+        {paymentStatus === "success" && (
+          <div className="mt-4 text-center">
+            <img
+              src={payment_success}
+              alt="Payment Success"
+              className="w-24 mx-auto"
+            />
+            <p className="text-green-600 font-bold">Payment Successful!</p>
+          </div>
+        )}
+
+        {paymentStatus === "error" && (
+          <div className="mt-4 text-center">
+            <img
+              src={payment_error}
+              alt="Payment Failed"
+              className="w-24 mx-auto"
+            />
+            <p className="text-red-600 font-bold">
+              Payment Failed! Please try again.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

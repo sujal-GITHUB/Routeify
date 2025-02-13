@@ -1,18 +1,46 @@
-import React from "react";
+import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { setRideData } from '../actions/rideActions';
+import axios from 'axios';
 
 const VehiclePanel = ({ rides, setSelectedRide }) => {
   const dispatch = useDispatch();
-  const { vehicletype, price } = useSelector(state => state.ride);
+  const { pickup = "", destination = "", vehicletype, price = "" } = useSelector((state) => state.ride) || {};
+  const [fare, setFare] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const handleRideSelect = (ride) => {
     setSelectedRide(ride.id);
-    dispatch(setRideData({ 
+    dispatch(setRideData({
       vehicletype: ride.id,
-      price: ride.price 
+      price: fare ? fare[ride.id] : ride.price // Use fetched fare if available
     }));
   };
+
+  useEffect(() => {
+    const fetchFare = async () => {
+      try {
+        setLoading(true);
+        const response = await axios.get(`${import.meta.env.VITE_BASE_URL}/rides/fare`, {
+          params: { pickup, destination },
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('usertoken')}`
+          }
+        });
+
+        setFare(response.data);
+      } catch (err) {
+        setError(err.response ? err.response.data : { message: 'An error occurred' });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (pickup && destination) {
+      fetchFare();
+    }
+  }, [pickup, destination]);
 
   return (
     <div className="mt-6 mx-1 mb-1">
@@ -40,7 +68,16 @@ const VehiclePanel = ({ rides, setSelectedRide }) => {
                 <p className="text-xs text-gray-600 text-start">{ride.description}</p>
               </div>
             </div>
-            <span className="font-semibold">{ride.price}</span>
+            <span className="font-semibold">
+              {loading ? (
+                <svg className="animate-spin h-5 w-5 text-gray-600" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                </svg>
+              ) : (
+                `₹${fare ? fare[ride.id] || ride.price : ride.price}`
+              )}
+            </span>
           </button>
         ))}
       </div>

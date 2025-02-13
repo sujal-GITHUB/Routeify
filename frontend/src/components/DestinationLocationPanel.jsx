@@ -77,16 +77,6 @@ const DestinationLocationPanel = ({ destination, setDestination }) => {
             </div>
           </div>
         ))}
-
-      {/* Display the raw JSON response below the suggestion items */}
-      {!loading && !error && locations.length > 0 && (
-        <div className="mt-3">
-          <h5 className="text-xs text-gray-500 mb-1">Response JSON:</h5>
-          <pre className="bg-gray-50 p-2 text-xs text-gray-600 overflow-auto">
-            {JSON.stringify(locations, null, 2)}
-          </pre>
-        </div>
-      )}
     </div>
   );
 };

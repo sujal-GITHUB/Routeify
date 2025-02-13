@@ -1,14 +1,17 @@
-import React, { useState } from 'react'
-import ConfirmRide from '../components/ConfirmRide'
-import logo from '../assets/logo1.png'
+import React, { useState, useRef, useEffect } from 'react';
+import ConfirmRide from '../components/ConfirmRide';
+import logo from '../assets/logo1.png';
 import gsap from "gsap";
-import { useRef } from 'react';
-import RidePopup from '../components/RidePopup'
+import RidePopup from '../components/RidePopup';
 
 const Riding = () => {
   const panelRef = useRef();
-  const panelDownRef = useRef();
   const [isPanelDown, setIsPanelDown] = useState(false);
+
+  // Set the initial height of the panel to 95% when the component mounts
+  useEffect(() => {
+    gsap.set(panelRef.current, { height: '95%' });
+  }, []);
 
   const panelDown = () => {
     setIsPanelDown(true);
@@ -23,7 +26,7 @@ const Riding = () => {
   const panelUp = () => {
     setIsPanelDown(false);
     gsap.to(panelRef.current, {
-      height: "89%",
+      height: "95%",  // This should match the default height
       opacity: 1,
       duration: 0.5,
       ease: "easeOut",
@@ -41,14 +44,13 @@ const Riding = () => {
       <div className="absolute inset-0 flex flex-col justify-end">
         <div ref={panelRef} className="bg-white pl-5 pr-5 pb-5 pt-1 rounded-t-2xl flex flex-col">
           <button 
-            ref={panelDownRef} 
             className="opacity-1 text-center transition-transform duration-300" 
             onClick={isPanelDown ? panelUp : panelDown}
           >
             <i className={`text-2xl ${isPanelDown ? 'ri-arrow-up-wide-fill' : 'ri-arrow-down-wide-fill'}`}></i>
           </button>
           <div className="flex justify-center items-center mb-5">
-            <div className='h-[520px] overflow-hidden'>
+            <div className='h-[590px]  overflow-hidden'>
               <ConfirmRide />
               <RidePopup />
             </div>
@@ -59,4 +61,4 @@ const Riding = () => {
   );
 };
 
-export default Riding
+export default Riding;

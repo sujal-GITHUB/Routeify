@@ -34,7 +34,7 @@ const RidePopup = ({ onAccept, onDecline }) => {
           </div>
           <div className='bg-white p-3 rounded-xl text-center'>
             <p className='text-sm text-gray-500'>Price</p>
-            <p className='font-semibold text-green-600'>{price}</p>
+            <p className='font-semibold text-green-600'>₹{price}</p>
           </div>
         </div>
 
