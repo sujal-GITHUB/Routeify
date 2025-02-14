@@ -67,6 +67,12 @@ const ConfirmRide = () => {
     });
   };
 
+  // Function to truncate text if it exceeds the max length
+  const truncateText = (text, maxLength = 70) => {
+    if (!text) return "";
+    return text.length > maxLength ? text.slice(0, maxLength) + "..." : text;
+  };
+
   const makePayment = async () => {
     try {
       setIsProcessing(true);
@@ -187,10 +193,10 @@ const ConfirmRide = () => {
 
         <div className="w-full text-gray-700 space-y-1">
           <p className="text-sm">
-            <strong>From:</strong> {pickup}
+            <strong>From:</strong> {truncateText(pickup)}
           </p>
           <p className="text-sm">
-            <strong>To:</strong> {destination}
+            <strong>To:</strong> {truncateText(destination)}
           </p>
           <p className="text-sm">
             <strong>Total Distance:</strong> {distance}

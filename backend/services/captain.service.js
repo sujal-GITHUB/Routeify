@@ -14,7 +14,7 @@ module.exports.createCaptain = async ({
         },
         email,
         password,
-        vehicle
+        vehicle,
     });
 
     return captain;

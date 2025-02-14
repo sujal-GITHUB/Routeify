@@ -65,6 +65,10 @@ const captainSchema = new monsgoose.Schema({
         lng:{
             type: Number,
         }
+    },
+    rating:{
+        type: Number,
+        default: 0
     }
 })
 

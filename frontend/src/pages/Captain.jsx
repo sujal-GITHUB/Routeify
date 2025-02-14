@@ -6,17 +6,37 @@ import logo from "../assets/logo1.png";
 import RecentRides from "../components/RecentRides";
 import RidePopup from "../components/RidePopup";
 import ConfirmRidePopup from "../components/ConfirmRidePopup";
+import { useSelector, useDispatch } from "react-redux";
+import { fetchCaptainData } from '../actions/captainActions';
 
 const Captain = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const panelRef = useRef();
   const panelContentRef = useRef();
   const panelClose = useRef(null);
   const ridePopupRef = useRef();
   const confirmRideRef = useRef();
   const [isPanelDown, setIsPanelDown] = useState(false);
-  const [isOnline, setIsOnline] = useState(false);
   const [showConfirmRide, setShowConfirmRide] = useState(false);
+
+  // Retrieve captain data from Redux store
+  const captainData = useSelector((state) => state.captain);
+  const {
+    firstname,
+    lastname,
+    earning,
+    rating,
+    status 
+  } = captainData;
+
+  // Local state to track active/inactive status
+  const [isActive, setIsActive] = useState(status === 'active');
+
+  useEffect(() => {
+    // Dispatch action to fetch captain data
+    dispatch(fetchCaptainData());
+  }, [dispatch]);
 
   const panelDown = () => {
     setIsPanelDown(true);
@@ -101,6 +121,33 @@ const Captain = () => {
     }
   }, [showConfirmRide]);
 
+  // Toggle the captain's status between active and inactive
+  const toggleActiveStatus = async () => {
+    try {
+      const token = localStorage.getItem("captaintoken");
+      const newStatus = isActive ? 'inactive' : 'active';
+
+      // Update status in the local state
+      setIsActive(!isActive);
+
+      // Send update request to the backend
+      const response = await axios.post(
+        `${import.meta.env.VITE_BASE_URL}/captains/update`,
+        { status: newStatus },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (response.status === 200) {
+        console.log("Status updated successfully.");
+      }
+    } catch (error) {
+      console.error("Failed to update status:", error);
+      setIsActive(isActive); // Revert if the update fails
+    }
+  };
+
   return (
     <div className="h-screen font-lexend relative">
       <div className="absolute inset-0 -z-10">
@@ -128,12 +175,12 @@ const Captain = () => {
                   <input
                     type="checkbox"
                     className="sr-only peer"
-                    checked={isOnline}
-                    onChange={() => setIsOnline(!isOnline)}
+                    checked={isActive} // Use local isActive state
+                    onChange={toggleActiveStatus} // Handle status change
                   />
                   <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
                   <span className="ms-3 text-sm font-medium">
-                    {isOnline ? "Online" : "Offline"}
+                    {isActive ? "Active" : "Inactive"}
                   </span>
                 </label>
               </div>
@@ -157,31 +204,29 @@ const Captain = () => {
                 <div className="relative">
                   <img
                     className="h-16 w-16 rounded-full object-cover border-2 border-gray-200"
-                    src="https://static.vecteezy.com/system/resources/previews/036/594/092/non_2x/man-empty-avatar-photo-placeholder-for-social-networks-resumes-forums-and-dating-sites-male-and-female-no-photo-images-for-unfilled-user-profile-free-vector.jpg"
+                    src={"https://static.vecteezy.com/system/resources/previews/036/594/092/non_2x/man-empty-avatar-photo-placeholder-for-social-networks-resumes-forums-and-dating-sites-male-and-female-no-photo-images-for-unfilled-user-profile-free-vector.jpg"}
                     alt="Profile"
                   />
                   <div
-                    className={`absolute bottom-0 right-0 w-4 h-4 rounded-full border-2 border-white ${
-                      isOnline ? "bg-green-500" : "bg-red-500"
-                    }`}
+                    className={`absolute bottom-0 right-0 w-4 h-4 rounded-full border-2 border-white ${isActive ? "bg-green-500" : "bg-gray-500"}`}
                   ></div>
                 </div>
                 <div>
-                  <h2 className="font-semibold text-lg">Mohan Patel</h2>
+                  <h2 className="font-semibold text-lg capitalize">{firstname} {lastname}</h2>
                   <div className="flex items-center gap-2">
                     <i className="ri-star-fill text-yellow-400"></i>
-                    <span className="text-sm">4.8</span>
+                    <span className="text-sm">{rating}</span>
                   </div>
                 </div>
               </div>
               <div className="text-right">
-                <h3 className="text-2xl font-semibold text-green-600">₹295</h3>
-                <p className="text-sm text-gray-500">Today's Earning</p>
+                <h3 className="text-2xl font-semibold text-green-600">₹{earning}</h3>
+                <p className="text-sm text-gray-500">Today&apos;s Earning</p>
               </div>
             </div>
 
             {/* Stats Grid */}
-            
+            <RecentRides />
 
             {/* Recent Rides */}
             {!showConfirmRide ? (
@@ -193,7 +238,6 @@ const Captain = () => {
                 <ConfirmRidePopup onAccept={() => navigate('/captain-riding')} />
               </div>
             )}
-              
           </div>
         </div>
       </div>

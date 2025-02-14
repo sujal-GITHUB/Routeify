@@ -44,6 +44,7 @@ module.exports.registerCaptain = async (req, res) => {
                 capacity,
                 vehicleType,
             },
+            rating: 0
         });
 
         // Generate auth token
@@ -121,3 +122,48 @@ module.exports.logoutCaptain = async (req,res) =>{
     res.clearCookie('token')
     res.status(200).json({message: 'Logged out'})
 }
+
+module.exports.updateCaptainProfile = async (req, res) => {
+    const { firstname, lastname, email, vehicle, status, rating } = req.body;
+
+    try {   
+        // Check if the captain exists
+        const captain = await captainModel.findById(req.captain._id);
+        if (!captain) {
+            return res.status(404).json({ message: 'Captain not found.' });
+        }
+
+        // Update captain profile data if provided
+        if (firstname) captain.firstname = firstname;
+        if (lastname) captain.lastname = lastname;
+        if (email) captain.email = email;
+        if (rating) captain.rating = rating;
+        if (status) captain.status = status;
+
+        // Update vehicle information if provided
+        if (vehicle) {
+            if (vehicle.color) captain.vehicle.color = vehicle.color;
+            if (vehicle.plate) captain.vehicle.plate = vehicle.plate;
+            if (vehicle.capacity) captain.vehicle.capacity = vehicle.capacity;
+            if (vehicle.vehicleType) captain.vehicle.vehicleType = vehicle.vehicleType;
+        }
+
+        // Save the updated captain data
+        try {
+            await captain.save();
+        } catch (dbError) {
+            console.error("Error saving captain profile:", dbError);
+            return res.status(500).json({ message: "Error saving profile to database." });
+        }
+
+        // Fetch the updated captain profile
+        const updatedCaptainProfile = await captainModel.findById(req.captain._id);
+
+        // Respond with the updated captain info
+        res.status(200).json({ message: 'Profile updated successfully.', captain: updatedCaptainProfile });
+    } catch (error) {
+        console.error("Error in updateCaptainProfile:", error); // Log the entire error object
+        res.status(500).json({ message: "An internal server error occurred. Please try again later." });
+    }
+};
+

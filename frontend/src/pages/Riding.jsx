@@ -10,7 +10,7 @@ const Riding = () => {
 
   // Set the initial height of the panel to 95% when the component mounts
   useEffect(() => {
-    gsap.set(panelRef.current, { height: '95%' });
+    gsap.set(panelRef.current, { height: '91%' });
   }, []);
 
   const panelDown = () => {
@@ -26,7 +26,7 @@ const Riding = () => {
   const panelUp = () => {
     setIsPanelDown(false);
     gsap.to(panelRef.current, {
-      height: "95%",  // This should match the default height
+      height: "91%",  // This should match the default height
       opacity: 1,
       duration: 0.5,
       ease: "easeOut",
@@ -50,7 +50,7 @@ const Riding = () => {
             <i className={`text-2xl ${isPanelDown ? 'ri-arrow-up-wide-fill' : 'ri-arrow-down-wide-fill'}`}></i>
           </button>
           <div className="flex justify-center items-center mb-5">
-            <div className='h-[590px]  overflow-hidden'>
+            <div className='h-[560px]  overflow-hidden'>
               <ConfirmRide />
               <RidePopup />
             </div>
