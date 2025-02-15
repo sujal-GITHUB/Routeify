@@ -27,6 +27,7 @@ const userSchema = new mongoose.Schema({
   },
   socketId: {
     type: String,
+    default: ''
   },
 });
 

@@ -10,6 +10,7 @@ import payment_error from "../assets/payment-error.png";
 const ConfirmRide = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState(null);
+  const [loading, setLoading] = useState(true);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { pickup, destination, price, distance, time, vehicletype } =
@@ -41,11 +42,13 @@ const ConfirmRide = () => {
         );
       } catch (error) {
         console.error("Error fetching distance and time:", error);
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchDistanceTime();
-  }, [pickup, destination, navigate]);
+  }, [pickup, destination, navigate, dispatch]);
 
   const handleCancelRide = () => {
     const tl = gsap.timeline();
@@ -68,7 +71,7 @@ const ConfirmRide = () => {
   };
 
   // Function to truncate text if it exceeds the max length
-  const truncateText = (text, maxLength = 70) => {
+  const truncateText = (text, maxLength = 60) => {
     if (!text) return "";
     return text.length > maxLength ? text.slice(0, maxLength) + "..." : text;
   };
@@ -146,13 +149,40 @@ const ConfirmRide = () => {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <svg
+          className="animate-spin h-10 w-10 text-black"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+        >
+          <circle
+            className="opacity-25"
+            cx="12"
+            cy="12"
+            r="10"
+            stroke="currentColor"
+            strokeWidth="4"
+          ></circle>
+          <path
+            className="opacity-75"
+            fill="currentColor"
+            d="M4 12a8 8 0 018-8v8H4z"
+          ></path>
+        </svg>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full flex flex-col items-center bg-gray-100 p-5 rounded-xl animate-fade-in">
       <div className="ride-details w-full">
         <div className="w-full flex justify-between items-center mb-4">
           <h1 className="text-xl font-bold text-black">Reaching to you in</h1>
           <div className="bg-black text-white rounded-full px-4 py-1 text-base">
-            2 mins
+            {2} mins
           </div>
         </div>
 

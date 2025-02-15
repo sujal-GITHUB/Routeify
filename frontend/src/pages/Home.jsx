@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from 'react-redux';
 import { setRideData } from '../actions/rideActions';
@@ -13,6 +13,8 @@ import bike from "../assets/bike.png";
 import auto from "../assets/auto.png";
 import VehiclePanel from "../components/VehiclePanel";
 import FindCaptains from "../components/FindCaptains";
+import { socketContext } from "../context/socketContext";
+import { fetchUserData } from '../actions/userActions';
 
 const Home = () => {
   const dispatch = useDispatch();
@@ -27,10 +29,14 @@ const Home = () => {
   const [selectedRide, setSelectedRide] = useState(null);
   const [input, setInput] = useState("");
   const [destinationInput, setDestinationInput] = useState("");
+  const [loadingUser, setLoadingUser] = useState(true); // Loading state for user data
 
   // Update selector to handle undefined state
   const rideData = useSelector(state => state.ride) || {};
   const { pickup = '', destination = '', price = '' } = rideData;
+
+  const user = useSelector((state) => state.user);
+  const { socket } = useContext(socketContext);
 
   const panelRef = useRef(null);
   const panelClose = useRef(null);
@@ -38,8 +44,23 @@ const Home = () => {
   const vehiclePanelRef = useRef(null);
   const formRef = useRef(null);
   const rideOptionsRef = useRef(null);
+  
+  useEffect(() => {
+    const fetchData = async () => {
+      await dispatch(fetchUserData());
+      setLoadingUser(false);
+    };
+    fetchData();
+  }, [dispatch]);
 
-  // Handle location input completion
+  useEffect(() => {
+    if (!loadingUser && user && user.id) {
+      socket.emit('join', { userType: 'user', userId: user.id });
+    } else if (!loadingUser) {
+      console.error('User ID is not available or invalid:', user);
+    }
+  }, [user, socket, loadingUser]);
+
   useEffect(() => {
   if (pickup && destination) {
     const tl = gsap.timeline();
