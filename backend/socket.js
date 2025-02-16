@@ -99,11 +99,11 @@ const initializeSocket = (server) => {
     });
 };
 
-function sendMessageToSocketId(socketId, message) {
-    if (io) {
-        io.to(socketId).emit("message", message);
-    } else {
-        console.error("Socket not initialized");
+function sendMessageToSocketId(socketId, messageObject) {
+    try {
+        io.to(socketId).emit(messageObject.event, messageObject.data);
+    } catch (error) {
+        console.error("❌ Error sending message via socket:", error.message);
     }
 }
 

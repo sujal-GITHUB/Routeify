@@ -9,7 +9,6 @@ router.post('/create-order',
 )
 
 router.post('/verify-payment',
-    authMiddleware.authUser,
     paymentController.verifyPayment
 );
 

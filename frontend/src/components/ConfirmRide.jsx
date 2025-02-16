@@ -149,6 +149,48 @@ const ConfirmRide = () => {
     }
   };
 
+  // Function to create a ride
+  const createRide = async () => {
+    const rideDetails = {
+      "pickup":pickup,
+      "destination":destination,
+      "vehicleType":vehicletype
+    }
+    try {
+      setIsProcessing(true);
+      const token = localStorage.getItem("usertoken");
+      const response = await axios.post(
+        `${import.meta.env.VITE_BASE_URL}/rides/create`, 
+        rideDetails,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      console.log("Ride created successfully:", response.data);
+      dispatch(setRideData(response.data));
+      setPaymentStatus("success");
+    } catch (error) {
+      console.error("Error creating ride:", error);
+      setPaymentStatus("error");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleConfirmRide = () => {
+    const rideDetails = {
+      pickup: "Your pickup location", // Replace with actual data
+      destination: "Your destination", // Replace with actual data
+      vehicleType: "Your vehicle type", // Add vehicle type
+      // Add any other necessary ride details here
+    };
+
+    createRide(rideDetails);
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen">
@@ -248,7 +290,7 @@ const ConfirmRide = () => {
             Cancel Ride
           </button>
           <button
-            onClick={makePayment}
+            onClick={handleConfirmRide}
             className="mt-5 bg-green-500 hover:bg-green-600 text-white w-1/2 py-3 px-4 rounded-md transition flex items-center justify-center"
             disabled={isProcessing}
           >
@@ -274,7 +316,7 @@ const ConfirmRide = () => {
                 ></path>
               </svg>
             ) : (
-              `Pay ₹${price}`
+              `Confirm Ride`
             )}
           </button>
         </div>
@@ -286,7 +328,7 @@ const ConfirmRide = () => {
               alt="Payment Success"
               className="w-24 mx-auto"
             />
-            <p className="text-green-600 font-bold">Payment Successful!</p>
+            <p className="text-green-600 font-bold">Ride created successfully!</p>
           </div>
         )}
 
@@ -298,7 +340,7 @@ const ConfirmRide = () => {
               className="w-24 mx-auto"
             />
             <p className="text-red-600 font-bold">
-              Payment Failed! Please try again.
+              Error creating ride. Please try again.
             </p>
           </div>
         )}

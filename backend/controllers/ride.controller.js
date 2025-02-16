@@ -1,8 +1,7 @@
-/* This code snippet is a part of a Node.js application that handles ride-related functionalities.
-Here's a breakdown of what the code does: */
 const rideService = require('../services/ride.service');
 const mapService = require('../services/maps.service')
 const { validationResult } = require('express-validator');
+const {sendMessageToSocketId} = require('../socket')
 
 module.exports.createRide = async (req, res) => {
     const errors = validationResult(req);
@@ -46,6 +45,15 @@ module.exports.createRide = async (req, res) => {
             vehicleType 
         });
 
+        ride.otp = ""
+        activeCaptains.forEach(captain => {
+            console.log(`📩 Notifying captain ${captain.socketId} about new ride`);
+            
+            sendMessageToSocketId(captain.socketId, {
+                event: 'new-ride',
+                data: ride
+            });
+        });
         console.log('Ride created successfully!')
 
         return res.status(201).json(ride);
