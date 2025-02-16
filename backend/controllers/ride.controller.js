@@ -10,24 +10,47 @@ module.exports.createRide = async (req, res) => {
         return res.status(400).json({ errors: errors.array() });
     }
 
-    const { userId, pickup, destination, vehicleType } = req.body;
+    const { pickup, destination, vehicleType } = req.body;
 
     try {
-        const ride = await rideService.createRide({ user: req.user._id, pickup, destination, vehicleType });
-        
-
         const pickupCoordinates = await mapService.getAddressCoordinate(pickup);
-        console.log(pickupCoordinates);
-        
-        const captainsInRadius = await mapService.getCaptainsInTheRadius(pickupCoordinates.latitude, pickupCoordinates.longitude, 5);
-        if (captainsInRadius.length === 0) {
-            console.log('No captains found in the vicinity.');
-        } else {
-            console.log(captainsInRadius);
+        if (!pickupCoordinates || pickupCoordinates.latitude === undefined || pickupCoordinates.longitude === undefined) {
+            return res.status(400).json({ message: "Invalid pickup coordinates." });
         }
+
+        const captainsInRadius = await mapService.getCaptainsInTheRadius(
+            pickupCoordinates.latitude, 
+            pickupCoordinates.longitude, 
+            7
+        );
+
+        if (!captainsInRadius || captainsInRadius.length === 0) {
+            console.log("⚠️ No captains found in the vicinity.");
+            return res.status(404).json({ message: "No captains available nearby." });
+        }
+
+        // Filter captains by active status
+        const activeCaptains = captainsInRadius.filter(captain => captain.status === "active");
+
+        if (activeCaptains.length === 0) {
+            console.log("⚠️ No active captains available.");
+            return res.status(404).json({ message: "No active captains available." });
+        }
+
+        console.log(`✅ Active Captains Found: ${activeCaptains.length}`);
+
+        const ride = await rideService.createRide({ 
+            user: req.user._id, 
+            pickup, 
+            destination, 
+            vehicleType 
+        });
+
+        console.log('Ride created successfully!')
 
         return res.status(201).json(ride);
     } catch (err) {
+        console.error("❌ Error in createRide:", err);
         return res.status(500).json({ message: err.message });
     }
 };

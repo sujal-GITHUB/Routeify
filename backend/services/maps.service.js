@@ -118,21 +118,21 @@ module.exports.getSuggestions = async (address) => {
  * @param {number} radius - The search radius in **kilometers**.
  * @returns {Promise<Array>} - An array of captains within the given radius.
  */
+ 
 module.exports.getCaptainsInTheRadius = async (latitude, longitude, radius) => {
     try {
         if (!latitude || !longitude || !radius) {
             throw new Error('Latitude, longitude, and radius are required.');
         }
 
-        // Convert radius from kilometers to meters
-        const radiusInMeters = radius * 1000;
+        const radiusInMeters = radius * 1000; // Convert km to meters
 
         const captains = await captainModel.find({
             location: {
-                $nearSphere: {
+                $near: {
                     $geometry: {
                         type: "Point",
-                        coordinates: [longitude, latitude]
+                        coordinates: [longitude, latitude] 
                     },
                     $maxDistance: radiusInMeters
                 }
@@ -144,3 +144,6 @@ module.exports.getCaptainsInTheRadius = async (latitude, longitude, radius) => {
         throw new Error(error.message || 'An error occurred while fetching captains.');
     }
 };
+
+
+

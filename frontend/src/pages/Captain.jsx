@@ -31,15 +31,20 @@ const Captain = () => {
   }, [dispatch]);
 
   useEffect(() => {
- // Persistent reference to interval
-  
+    if (!loading && id?.trim().length === 24) {
+      socket.emit('join', { userType: 'captain', userId: id.trim() });
+    } else if (!loading) {
+      console.error('User ID is not available or invalid:', captainData);
+    }
+  }, [id, socket, loading]);
+
+  useEffect(() => {
     const updateLocation = () => {
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           (position) => {
             const { latitude, longitude } = position.coords;
-            console.log({ location: { latitude, longitude } });
-  
+
             if (id?.trim().length === 24) {
               socket.emit("update-location-captain", {
                 userId: id.trim(),
@@ -56,20 +61,14 @@ const Captain = () => {
         console.error("Geolocation is not supported by this browser.");
       }
     };
-    // Clear any existing interval before setting a new one
+
     if (locationIntervalRef.current) {
       clearInterval(locationIntervalRef.current);
     }
-  
-    // Set new interval and store reference
+
     locationIntervalRef.current = setInterval(updateLocation, 10000);
-  
-    // Cleanup function to clear interval on unmount or re-run
-    return () => {
-      if (locationIntervalRef.current) {
-        clearInterval(locationIntervalRef.current);
-      }
-    };
+
+    return () => clearInterval(locationIntervalRef.current);
   }, [id, socket]);
 
   useEffect(() => {
