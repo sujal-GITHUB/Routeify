@@ -79,6 +79,70 @@ const initializeSocket = (server) => {
             }
         });
 
+        socket.on('request-ride', async (rideData) => {
+            try {
+              // Find active captains within 5km radius
+              const captains = await captainModel.find({
+                status: 'active',
+                vehicleType: rideData.vehicleType,
+                location: {
+                  $near: {
+                    $geometry: {
+                      type: "Point",
+                      coordinates: [/* user's longitude */, /* user's latitude */]
+                    },
+                    $maxDistance: 5000 // 5km radius
+                  }
+                }
+              });
+          
+              // Send ride request to nearby captains
+              captains.forEach(captain => {
+                sendMessageToSocketId(captain.socketId, {
+                  event: 'new-ride-request',
+                  data: rideData
+                });
+              });
+            } catch (error) {
+              socket.emit('error', { message: 'Failed to find captains' });
+            }
+          });
+          
+          socket.on('accept-ride', async ({ rideId, captainId }) => {
+            try {
+              // Update ride with captain information
+              const ride = await rideModel.findByIdAndUpdate(
+                rideId,
+                { captain: captainId, status: 'accepted' },
+                { new: true }
+              );
+          
+              // Get user socket ID from ride
+              const user = await userModel.findById(ride.user);
+              
+              // Notify user
+              sendMessageToSocketId(user.socketId, {
+                event: 'ride-accepted',
+                data: { captain: captainId }
+              });
+          
+              // Notify other captains
+              sendMessageToAllCaptains(rideId, 'ride-no-longer-available');
+          
+            } catch (error) {
+              console.error('Ride acceptance error:', error);
+            }
+          });
+          
+          socket.on('cancel-ride', (rideId) => {
+            // Notify all captains about cancellation
+            sendMessageToAllCaptains(rideId, 'ride-cancelled');
+          });
+          
+          function sendMessageToAllCaptains(rideId, event) {
+            io.emit(event, { rideId });
+          }
+
         socket.on("disconnect", async () => {
 
             try {

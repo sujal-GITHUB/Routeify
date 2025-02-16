@@ -10,6 +10,7 @@ import payment_error from "../assets/payment-error.png";
 const ConfirmRide = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState(null);
+  const [showPaymentMethods, setShowPaymentMethods] = useState(false);
   const [loading, setLoading] = useState(true);
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -17,7 +18,7 @@ const ConfirmRide = () => {
     useSelector((state) => state.ride);
 
   useEffect(() => {
-    if (!pickup || pickup === "") {
+    if (!pickup) {
       navigate("/home");
       return;
     }
@@ -27,19 +28,17 @@ const ConfirmRide = () => {
         const response = await axios.get(
           `${import.meta.env.VITE_BASE_URL}/maps/get-distance-time`,
           {
-            params: { origin: pickup, destination: destination },
+            params: { origin: pickup, destination },
             headers: {
               Authorization: `Bearer ${localStorage.getItem("usertoken")}`,
             },
           }
         );
 
-        dispatch(
-          setRideData({
-            distance: response.data.distance,
-            time: response.data.duration,
-          })
-        );
+        dispatch(setRideData({
+          distance: response.data.distance,
+          time: response.data.duration,
+        }));
       } catch (error) {
         console.error("Error fetching distance and time:", error);
       } finally {
@@ -51,144 +50,86 @@ const ConfirmRide = () => {
   }, [pickup, destination, navigate, dispatch]);
 
   const handleCancelRide = () => {
-    const tl = gsap.timeline();
-    tl.to(".ride-details", {
+    gsap.to(".ride-details", {
       opacity: 0,
       height: 0,
       duration: 0.3,
       onComplete: () => {
-        dispatch(
-          setRideData({
-            pickup: "",
-            destination: "",
-            price: "",
-            vehicletype: "",
-          })
-        );
+        dispatch(setRideData({
+          pickup: "",
+          destination: "",
+          price: "",
+          vehicletype: "",
+        }));
         navigate("/home");
       },
     });
   };
 
-  // Function to truncate text if it exceeds the max length
   const truncateText = (text, maxLength = 60) => {
-    if (!text) return "";
-    return text.length > maxLength ? text.slice(0, maxLength) + "..." : text;
+    return text?.length > maxLength ? `${text.slice(0, maxLength)}...` : text || "";
   };
 
-  const makePayment = async () => {
+  const handlePayment = async (paymentMethod) => {
     try {
       setIsProcessing(true);
+      setPaymentStatus(null);
 
-      // 1️⃣ Create an order on the backend
-      const { data } = await axios.post(
-        `${import.meta.env.VITE_BASE_URL}/payments/create-order`,
-        { amount: price, currency: "INR" },
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("usertoken")}`,
-          },
-        }
-      );
+      if (paymentMethod === "online") {
+        const { data } = await axios.post(
+          `${import.meta.env.VITE_BASE_URL}/payments/create-order`,
+          { amount: price, currency: "INR" },
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("usertoken")}`,
+            },
+          }
+        );
 
-      if (!data.success || !data.order) {
-        throw new Error("Failed to create order");
-      }
-
-      // 2️⃣ Initialize Razorpay Payment
-      const options = {
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
-        amount: data.order.amount,
-        currency: data.order.currency,
-        name: "Routeify",
-        description: "Ride Payment",
-        order_id: data.order.id,
-        handler: async function (response) {
-          console.log("Payment Success:", response);
-
-          // 3️⃣ Verify Payment on Backend
-          const verifyResponse = await axios.post(
-            `${import.meta.env.VITE_BASE_URL}/payments/verify-payment`,
-            response
-          );
-
-          if (verifyResponse.data.success) {
-            setPaymentStatus("success");
-            dispatch(
-              setRideData((prev) => ({
-                ...prev,
-                paymentComplete: true,
-                paymentTime: new Date().toISOString(),
-              }))
+        const options = {
+          key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+          amount: data.order.amount,
+          currency: data.order.currency,
+          name: "Routeify",
+          description: "Ride Payment",
+          order_id: data.order.id,
+          handler: async (response) => {
+            const verifyResponse = await axios.post(
+              `${import.meta.env.VITE_BASE_URL}/payments/verify-payment`,
+              response
             );
 
-            setTimeout(() => navigate("/riding"), 1500);
-          } else {
-            setPaymentStatus("error");
-          }
-        },
-        prefill: {
-          name: "John Cena",
-          email: "john@example.com",
-          contact: "9999999999",
-        },
-        theme: { color: "#3399cc" },
-      };
+            if (verifyResponse.data.success) {
+              setPaymentStatus("success");
+              setTimeout(() => navigate("/riding"), 1500);
+            } else {
+              setPaymentStatus("error");
+            }
+          },
+          theme: { color: "#3399cc" },
+        };
 
-      const razorpay = new window.Razorpay(options);
-      razorpay.open();
-      razorpay.on("payment.failed", function (response) {
-        console.error("Payment Failed:", response.error);
-        setPaymentStatus("error");
-      });
+        const razorpay = new window.Razorpay(options);
+        razorpay.on("payment.failed", () => setPaymentStatus("error"));
+        razorpay.open();
+      } else {
+        setTimeout(() => navigate("/riding"), 500);
+      }
     } catch (error) {
       console.error("Payment failed:", error);
-      setPaymentStatus("error");
-    } finally {
-      setTimeout(() => setIsProcessing(false), 2000);
-    }
-  };
-
-  // Function to create a ride
-  const createRide = async () => {
-    const rideDetails = {
-      "pickup":pickup,
-      "destination":destination,
-      "vehicleType":vehicletype
-    }
-    try {
-      setIsProcessing(true);
-      const token = localStorage.getItem("usertoken");
-      const response = await axios.post(
-        `${import.meta.env.VITE_BASE_URL}/rides/create`, 
-        rideDetails,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      console.log("Ride created successfully:", response.data);
-      dispatch(setRideData(response.data));
-      setPaymentStatus("success");
-    } catch (error) {
-      console.error("Error creating ride:", error);
       setPaymentStatus("error");
     } finally {
       setIsProcessing(false);
     }
   };
 
-  const handleConfirmRide = () => {
-    const rideDetails = {
-      pickup: "Your pickup location", // Replace with actual data
-      destination: "Your destination", // Replace with actual data
-      vehicleType: "Your vehicle type", // Add vehicle type
-      // Add any other necessary ride details here
-    };
 
-    createRide(rideDetails);
+  const handleButtonClick = (isLeftButton) => {
+    if (showPaymentMethods) {
+      isLeftButton ? handlePayment("cash") : handlePayment("online");
+    } else {
+      isLeftButton ? handleCancelRide() : setShowPaymentMethods(true);
+    }
   };
 
   if (loading) {
@@ -219,8 +160,9 @@ const ConfirmRide = () => {
   }
 
   return (
-    <div className="w-full flex flex-col items-center bg-gray-100 p-5 rounded-xl animate-fade-in">
+    <div className="w-full h-full flex flex-col items-center bg-gray-100 p-5 rounded-xl animate-fade-in">
       <div className="ride-details w-full">
+        {/* Existing UI elements remain unchanged below */}
         <div className="w-full flex justify-between items-center mb-4">
           <h1 className="text-xl font-bold text-black">Reaching to you in</h1>
           <div className="bg-black text-white rounded-full px-4 py-1 text-base">
@@ -263,7 +205,9 @@ const ConfirmRide = () => {
 
         <div className="h-[2px] w-full bg-gray-300 mb-4"></div>
 
-        <div className="w-full text-gray-700 space-y-1">
+        {!paymentStatus && (
+          <div>
+            <div className="w-full text-gray-700 space-y-1">
           <p className="text-sm">
             <strong>From:</strong> {truncateText(pickup)}
           </p>
@@ -284,14 +228,19 @@ const ConfirmRide = () => {
 
         <div className="flex gap-2">
           <button
-            onClick={handleCancelRide}
-            className="mt-5 bg-red-500 hover:bg-red-600 text-white w-1/2 py-3 px-4 rounded-md transition"
+            onClick={() => handleButtonClick(true)}
+            className={`mt-5 bg-red-500 hover:bg-red-600 text-white w-1/2 py-3 px-4 rounded-md transition ${
+              isProcessing ? "opacity-50 cursor-not-allowed" : ""
+            }`}
+            disabled={isProcessing}
           >
-            Cancel Ride
+            {showPaymentMethods ? "Cash" : "Cancel Ride"}
           </button>
           <button
-            onClick={handleConfirmRide}
-            className="mt-5 bg-green-500 hover:bg-green-600 text-white w-1/2 py-3 px-4 rounded-md transition flex items-center justify-center"
+            onClick={() => handleButtonClick(false)}
+            className={`mt-5 bg-green-500 hover:bg-green-600 text-white w-1/2 py-3 px-4 rounded-md transition flex items-center justify-center ${
+              isProcessing ? "opacity-50 cursor-not-allowed" : ""
+            }`}
             disabled={isProcessing}
           >
             {isProcessing ? (
@@ -316,31 +265,24 @@ const ConfirmRide = () => {
                 ></path>
               </svg>
             ) : (
-              `Confirm Ride`
+              showPaymentMethods ? "Online" : "Confirm Ride"
             )}
           </button>
         </div>
-
-        {paymentStatus === "success" && (
-          <div className="mt-4 text-center">
-            <img
-              src={payment_success}
-              alt="Payment Success"
-              className="w-24 mx-auto"
-            />
-            <p className="text-green-600 font-bold">Ride created successfully!</p>
           </div>
-        )}
+        ) }
 
-        {paymentStatus === "error" && (
+        {paymentStatus && (
           <div className="mt-4 text-center">
             <img
-              src={payment_error}
-              alt="Payment Failed"
-              className="w-24 mx-auto"
+              src={paymentStatus === "success" ? payment_success : payment_error}
+              className="mx-auto h-24 w-24"
+              alt="Payment Status"
             />
-            <p className="text-red-600 font-bold">
-              Error creating ride. Please try again.
+            <p className="mt-2 font-semibold">
+              {paymentStatus === "success"
+                ? "Payment Successful!"
+                : "Payment Failed"}
             </p>
           </div>
         )}

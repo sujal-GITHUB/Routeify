@@ -2,57 +2,70 @@ import React, { useState, useRef, useEffect } from 'react';
 import ConfirmRide from '../components/ConfirmRide';
 import logo from '../assets/logo1.png';
 import gsap from "gsap";
-import RidePopup from '../components/RidePopup';
 
 const Riding = () => {
   const panelRef = useRef();
   const [isPanelDown, setIsPanelDown] = useState(false);
 
-  // Set the initial height of the panel to 95% when the component mounts
+  // Initial setup of panel when component mounts
   useEffect(() => {
-    gsap.set(panelRef.current, { height: '91%' });
+    if (panelRef.current) {
+      gsap.set(panelRef.current, {
+        height: 'auto'
+      });
+    }
   }, []);
 
-  const panelDown = () => {
-    setIsPanelDown(true);
+  const togglePanel = () => {
+    setIsPanelDown(!isPanelDown);
+    
     gsap.to(panelRef.current, {
-      height: "17%",
-      opacity: 1,
+      height: isPanelDown ? 'auto' : '100px', // Adjust this value based on your needs
       duration: 0.5,
-      ease: "easeOut",
-    });
-  };
-
-  const panelUp = () => {
-    setIsPanelDown(false);
-    gsap.to(panelRef.current, {
-      height: "91%",  // This should match the default height
-      opacity: 1,
-      duration: 0.5,
-      ease: "easeOut",
+      ease: "power3.out",
+      onComplete: () => {
+        // Optional: Update panel content after animation
+        if (!isPanelDown) {
+          // Handle expanded state
+        }
+      }
     });
   };
 
   return (
     <div className="h-screen font-lexend relative overflow-hidden">
+      {/* Background Image */}
       <div className="absolute inset-0 -z-10">
-        <img src="/image-copy.png" alt="Background" className="w-full h-full object-cover" />
+        <img 
+          src="/image-copy.png" 
+          alt="Background" 
+          className="w-full h-full object-cover" 
+        />
       </div>
+
+      {/* Logo */}
       <div className="p-5">
         <img src={logo} alt="Routeify Logo" className="w-20" />
       </div>
+
+      {/* Bottom Panel */}
       <div className="absolute inset-0 flex flex-col justify-end">
-        <div ref={panelRef} className="bg-white pl-5 pr-5 pb-5 pt-1 rounded-t-2xl flex flex-col">
+        <div 
+          ref={panelRef}
+          className="bg-white rounded-t-2xl transition-all duration-500 ease-out"
+        >
+          {/* Toggle Button */}
           <button 
-            className="opacity-1 text-center transition-transform duration-300" 
-            onClick={isPanelDown ? panelUp : panelDown}
+            className="w-full py-1 flex justify-center items-center transition-transform duration-300" 
+            onClick={togglePanel}
           >
-            <i className={`text-2xl ${isPanelDown ? 'ri-arrow-up-wide-fill' : 'ri-arrow-down-wide-fill'}`}></i>
+            <i className={`text-2xl ${isPanelDown ? 'ri-arrow-up-s-line' : 'ri-arrow-down-s-line'}`} />
           </button>
-          <div className="flex justify-center items-center mb-5">
-            <div className='h-[560px]  overflow-hidden'>
+
+          {/* Panel Content */}
+          <div className="px-5 pb-5">
+            <div className="overflow-hidden">
               <ConfirmRide />
-              <RidePopup />
             </div>
           </div>
         </div>
