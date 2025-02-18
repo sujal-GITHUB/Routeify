@@ -2,6 +2,7 @@ import React, { useRef, useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from 'react-redux';
 import { setRideData } from '../actions/rideActions';
+import { setUserData } from '../actions/userActions'; // Add this import
 import axios from "axios";
 import logo from "../assets/logo1.png";
 import gsap from "gsap";
@@ -16,6 +17,41 @@ import FindCaptains from "../components/FindCaptains";
 import { socketContext } from "../context/socketContext";
 import { fetchUserData } from '../actions/userActions';
 
+// Then, create the user reducer (userReducer.js)
+const initialState = {
+  id: null,
+  name: '',
+  email: '',
+  phone: '',
+  isLoading: false,
+  error: null
+};
+
+export const userReducer = (state = initialState, action) => {
+  switch (action.type) {
+    case 'SET_USER_DATA':
+      return {
+        ...state,
+        ...action.payload,
+        isLoading: false,
+        error: null
+      };
+    case 'SET_USER_LOADING':
+      return {
+        ...state,
+        isLoading: true
+      };
+    case 'SET_USER_ERROR':
+      return {
+        ...state,
+        error: action.payload,
+        isLoading: false
+      };
+    default:
+      return state;
+  }
+};
+
 const Home = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -29,12 +65,12 @@ const Home = () => {
   const [selectedRide, setSelectedRide] = useState(null);
   const [input, setInput] = useState("");
   const [destinationInput, setDestinationInput] = useState("");
-  const [loadingUser, setLoadingUser] = useState(true); // Loading state for user data
+  const [loadingUser, setLoadingUser] = useState(true);
 
-  // Update selector to handle undefined state
+  // Update selectors to handle undefined state
   const rideData = useSelector(state => state.ride) || {};
   const { pickup = '', destination = '', price = '' } = rideData;
-
+  
   const user = useSelector((state) => state.user);
   const { socket } = useContext(socketContext);
 
@@ -43,23 +79,41 @@ const Home = () => {
   const findCaptainsRef = useRef(null);
   const vehiclePanelRef = useRef(null);
   const formRef = useRef(null);
-  const rideOptionsRef = useRef(null);
   
   useEffect(() => {
     const fetchData = async () => {
-      await dispatch(fetchUserData());
-      setLoadingUser(false);
+      try {
+        await dispatch(fetchUserData());
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+        // Handle error appropriately (e.g., redirect to login)
+        navigate("/login");
+      } finally {
+        setLoadingUser(false);
+      }
     };
     fetchData();
-  }, [dispatch]);
+  }, [dispatch, navigate]);
 
   useEffect(() => {
     if (!loadingUser && user && user.id) {
-      socket.emit('join', { userType: 'user', userId: user.id });
-    } else if (!loadingUser) {
-      console.error('User ID is not available or invalid:', user);
+      if (!socket) return;
+  
+      if (!socket.hasJoined) {
+        socket.emit('join', { 
+          userType: 'user', 
+          userId: user.id,
+          userData: {
+            name: user.name,
+            email: user.email,
+            phone: user.phone
+          }
+        });
+        socket.hasJoined = true;
+      }
     }
   }, [user, socket, loadingUser]);
+  
 
   useEffect(() => {
   if (pickup && destination) {
@@ -80,40 +134,6 @@ const Home = () => {
   }
 }, [pickup, destination]);
 
-useEffect(() => {
-  let timer;
-  if (showFindCaptains) {
-    timer = setTimeout(() => {
-      const tl = gsap.timeline();
-      
-      // Prepare ride data
-      const rideData = {
-        pickup,
-        destination,
-        price,
-        distance: '2.3 miles', // You can calculate this
-        time: '2 mins',
-        vehicletype: selectedRide
-      };
-
-      // Dispatch to store
-      dispatch(setRideData(rideData));
-      
-      tl.to(findCaptainsRef.current, {
-        opacity: 0,
-        height: 0,
-        duration: 0.3,
-        onComplete: () => {
-          setShowFindCaptains(false);
-          setShowRideOptions(false);
-          navigate("/riding");
-        }
-      });
-    }, 10000);
-  }
-
-  return () => clearTimeout(timer);
-}, [showFindCaptains, dispatch, pickup, destination, price, selectedRide]);
 
   // Panel animation with proper null checks
   useEffect(() => {
@@ -283,6 +303,7 @@ useEffect(() => {
       
       if (response.status === 200) {
         localStorage.removeItem("usertoken");
+        dispatch(setUserData(initialState));
         navigate("/login");
       }
     } catch (error) {

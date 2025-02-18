@@ -43,9 +43,10 @@ export const fetchUserData = () => {
         firstname: data.fullname.firstname,
         lastname: data.fullname.lastname,
         id: data._id,
+        socketId: data.socketId
       };
 
-      dispatch(fetchUserDataSuccess(userData)); // Dispatch success action with userData
+      dispatch(fetchUserDataSuccess(userData));
     } catch (error) {
       dispatch(fetchUserDataFailure(error.message));
     }

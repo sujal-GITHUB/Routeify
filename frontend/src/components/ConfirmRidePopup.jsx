@@ -1,10 +1,39 @@
-import React, { useState, forwardRef } from 'react';
+import React, { useState, forwardRef, useEffect, useContext } from 'react';
+import { socketContext } from '../context/socketContext';
 import { useSelector } from 'react-redux';
 
 const ConfirmRidePopup = forwardRef(({ onAccept, rideData }, ref) => {
-  const { pickup, destination, price } = useSelector(state => state.ride);
   const [showFullP, setShowFullP] = useState(false);
   const [showFullD, setShowFullD] = useState(false);
+  const [rides, setRides] = useState([]);
+  const captainData = useSelector((state) => state.captain);
+  const { firstname, lastname, earning, rating, status, id } = captainData;
+
+  const {socket} = useContext(socketContext);
+
+  useEffect(() => {
+    socket.on("available-rides", (data) => {
+      setRides(data);
+    });
+
+    socket.on("ride-no-longer-available", () => {
+      alert("Ride is no longer available!");
+    });
+
+    return () => {
+      socket.off("available-rides");
+      socket.off("ride-no-longer-available");
+    };
+  }, [socket]); 
+
+  // ✅ Accept Ride Function (Fixed missing rideId parameter)
+  const acceptRide = () => {
+    const captainId = localStorage.getItem("captainId");
+    if (!rideData || !rideData.user) 
+    return alert("Invalid ride data!"); 
+
+    socket.emit("accept-ride", { userId: rideData.user, captainId:id });
+  };
 
   return (
     <div ref={ref} className='bg-gray-100 h-92 w-full p-5 rounded-xl animate-slide-up mt-5'>
@@ -24,7 +53,7 @@ const ConfirmRidePopup = forwardRef(({ onAccept, rideData }, ref) => {
                   showFullP ? 'max-h-[500px]' : 'max-h-7 overflow-hidden'
                 }`}
               >
-                {rideData.pickup}
+                {rideData?.pickup || "N/A"}
               </p>
             </div>
           </div>
@@ -43,7 +72,7 @@ const ConfirmRidePopup = forwardRef(({ onAccept, rideData }, ref) => {
                   showFullD ? 'max-h-[500px]' : 'max-h-7 overflow-hidden'
                 }`}
               >
-                {rideData.destination}
+                {rideData?.destination || "N/A"}
               </p>
             </div>
           </div>
@@ -52,7 +81,7 @@ const ConfirmRidePopup = forwardRef(({ onAccept, rideData }, ref) => {
         {/* Ride Fare */}
         <div className='bg-white p-4 py-2 rounded-xl shadow-sm flex items-center justify-between'>
           <p className='text-gray-600 font-medium'>Ride Fare</p>
-          <p className='text-lg font-semibold text-green-600'>₹{rideData.fare}</p>
+          <p className='text-lg font-semibold text-green-600'>₹{rideData?.fare || 0}</p>
         </div>
 
         {/* OTP Input */}
@@ -78,7 +107,7 @@ const ConfirmRidePopup = forwardRef(({ onAccept, rideData }, ref) => {
         {/* Confirm Ride Button */}
         <div className='flex gap-3 mt-6'>
           <button 
-            onClick={onAccept}
+            onClick={acceptRide}
             className='w-full bg-green-500 hover:bg-green-600 text-white py-3 rounded-xl transition-colors font-medium'
           >
             Verify & Start Ride
@@ -88,5 +117,7 @@ const ConfirmRidePopup = forwardRef(({ onAccept, rideData }, ref) => {
     </div>
   );
 });
+
+ConfirmRidePopup.displayName = "ConfirmRidePopup";
 
 export default ConfirmRidePopup;
