@@ -125,7 +125,6 @@ const initializeSocket = (server) => {
 
                 // Send ride request to each captain
                 for (const captain of captains) {
-                    console.log(`📩 Notifying captain ${captain.socketId} about new ride`);
                     sendMessageToSocketId(captain.socketId, {
                         event: 'new-ride-request',
                         data: { ...rideData, captainId: captain._id }

@@ -14,8 +14,17 @@ const ConfirmRide = () => {
   const [loading, setLoading] = useState(true);
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { pickup, destination, price, distance, time, vehicletype } =
-    useSelector((state) => state.ride);
+  const captainData = useSelector((state) => state.captain);
+  const {
+    user,
+    captain,
+    pickup,
+    destination,
+    price,
+    distance,
+    time,
+    vehicletype,
+  } = useSelector((state) => state.ride);
 
   useEffect(() => {
     if (!pickup) {
@@ -35,10 +44,12 @@ const ConfirmRide = () => {
           }
         );
 
-        dispatch(setRideData({
-          distance: response.data.distance,
-          time: response.data.duration,
-        }));
+        dispatch(
+          setRideData({
+            distance: response.data.distance,
+            time: response.data.duration,
+          })
+        );
       } catch (error) {
         console.error("Error fetching distance and time:", error);
       } finally {
@@ -55,19 +66,23 @@ const ConfirmRide = () => {
       height: 0,
       duration: 0.3,
       onComplete: () => {
-        dispatch(setRideData({
-          pickup: "",
-          destination: "",
-          price: "",
-          vehicletype: "",
-        }));
+        dispatch(
+          setRideData({
+            pickup: "",
+            destination: "",
+            price: "",
+            vehicletype: "",
+          })
+        );
         navigate("/home");
       },
     });
   };
 
   const truncateText = (text, maxLength = 60) => {
-    return text?.length > maxLength ? `${text.slice(0, maxLength)}...` : text || "";
+    return text?.length > maxLength
+      ? `${text.slice(0, maxLength)}...`
+      : text || "";
   };
 
   const handlePayment = async (paymentMethod) => {
@@ -122,7 +137,6 @@ const ConfirmRide = () => {
       setIsProcessing(false);
     }
   };
-
 
   const handleButtonClick = (isLeftButton) => {
     if (showPaymentMethods) {
@@ -179,11 +193,20 @@ const ConfirmRide = () => {
             alt="Driver Avatar"
           />
           <div className="text-black">
-            <h5 className="text-base font-medium">John Cena</h5>
-            <h2 className="text-lg font-bold">PB 10 BP 7401</h2>
-            <h3 className="text-base">Yellow Porsche 911 Canvas</h3>
+            <h5 className="text-base font-medium">
+              {`${
+                captain.fullname.firstname.charAt(0).toUpperCase() +
+                captain.fullname.firstname.slice(1)
+              } ${
+                captain.fullname.lastname.charAt(0).toUpperCase() +
+                captain.fullname.lastname.slice(1)
+              }`}
+            </h5>
+
+            <h2 className="text-lg font-bold">{captain.vehicle.plate}</h2>
+            <h3 className="text-base">{captain.vehicle.vehicleType}</h3>
             <h4 className="flex items-center text-base text-yellow-500">
-              <i className="ri-star-fill mr-1"></i> 4.4
+              <i className="ri-star-fill mr-1"></i>{captain.rating}
             </h4>
           </div>
         </div>
@@ -208,74 +231,78 @@ const ConfirmRide = () => {
         {!paymentStatus && (
           <div>
             <div className="w-full text-gray-700 space-y-1">
-          <p className="text-sm">
-            <strong>From:</strong> {truncateText(pickup)}
-          </p>
-          <p className="text-sm">
-            <strong>To:</strong> {truncateText(destination)}
-          </p>
-          <p className="text-sm">
-            <strong>Total Distance:</strong> {distance}
-          </p>
-          <p className="text-sm">
-            <strong>Total Time:</strong> {time}
-          </p>
-          <p className="text-sm">
-            <strong>Total Price:</strong>{" "}
-            <span className="text-green-600">₹{price}</span>
-          </p>
-        </div>
+              <p className="text-sm">
+                <strong>From:</strong> {truncateText(pickup)}
+              </p>
+              <p className="text-sm">
+                <strong>To:</strong> {truncateText(destination)}
+              </p>
+              <p className="text-sm">
+                <strong>Total Distance:</strong> {distance}
+              </p>
+              <p className="text-sm">
+                <strong>Total Time:</strong> {time}
+              </p>
+              <p className="text-sm">
+                <strong>Total Price:</strong>{" "}
+                <span className="text-green-600">₹{price}</span>
+              </p>
+            </div>
 
-        <div className="flex gap-2">
-          <button
-            onClick={() => handleButtonClick(true)}
-            className={`mt-5 bg-red-500 hover:bg-red-600 text-white w-1/2 py-3 px-4 rounded-md transition ${
-              isProcessing ? "opacity-50 cursor-not-allowed" : ""
-            }`}
-            disabled={isProcessing}
-          >
-            {showPaymentMethods ? "Cash" : "Cancel Ride"}
-          </button>
-          <button
-            onClick={() => handleButtonClick(false)}
-            className={`mt-5 bg-green-500 hover:bg-green-600 text-white w-1/2 py-3 px-4 rounded-md transition flex items-center justify-center ${
-              isProcessing ? "opacity-50 cursor-not-allowed" : ""
-            }`}
-            disabled={isProcessing}
-          >
-            {isProcessing ? (
-              <svg
-                className="animate-spin h-5 w-5 mr-2 text-white"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
+            <div className="flex gap-2">
+              <button
+                onClick={() => handleButtonClick(true)}
+                className={`mt-5 bg-red-500 hover:bg-red-600 text-white w-1/2 py-3 px-4 rounded-md transition ${
+                  isProcessing ? "opacity-50 cursor-not-allowed" : ""
+                }`}
+                disabled={isProcessing}
               >
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                ></circle>
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8v8H4z"
-                ></path>
-              </svg>
-            ) : (
-              showPaymentMethods ? "Online" : "Confirm Ride"
-            )}
-          </button>
-        </div>
+                {showPaymentMethods ? "Cash" : "Cancel Ride"}
+              </button>
+              <button
+                onClick={() => handleButtonClick(false)}
+                className={`mt-5 bg-green-500 hover:bg-green-600 text-white w-1/2 py-3 px-4 rounded-md transition flex items-center justify-center ${
+                  isProcessing ? "opacity-50 cursor-not-allowed" : ""
+                }`}
+                disabled={isProcessing}
+              >
+                {isProcessing ? (
+                  <svg
+                    className="animate-spin h-5 w-5 mr-2 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8v8H4z"
+                    ></path>
+                  </svg>
+                ) : showPaymentMethods ? (
+                  "Online"
+                ) : (
+                  "Confirm Ride"
+                )}
+              </button>
+            </div>
           </div>
-        ) }
+        )}
 
         {paymentStatus && (
           <div className="mt-4 text-center">
             <img
-              src={paymentStatus === "success" ? payment_success : payment_error}
+              src={
+                paymentStatus === "success" ? payment_success : payment_error
+              }
               className="mx-auto h-24 w-24"
               alt="Payment Status"
             />
