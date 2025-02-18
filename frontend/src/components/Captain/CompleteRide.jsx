@@ -1,43 +1,18 @@
 import React, { useState, forwardRef, useEffect, useContext } from 'react';
-import { socketContext } from '../context/socketContext';
+import { socketContext } from '../../context/socketContext';
 import { useSelector } from 'react-redux';
 
-const ConfirmRidePopup = forwardRef(({ onAccept, rideData }, ref) => {
+const CompleteRide = forwardRef(({ onAccept, rides, rideData }, ref) => {
   const [showFullP, setShowFullP] = useState(false);
   const [showFullD, setShowFullD] = useState(false);
-  const [rides, setRides] = useState([]);
   const captainData = useSelector((state) => state.captain);
   const { firstname, lastname, earning, rating, status, id } = captainData;
 
   const {socket} = useContext(socketContext);
 
-  useEffect(() => {
-    socket.on("available-rides", (data) => {
-      setRides(data);
-    });
-
-    socket.on("ride-no-longer-available", () => {
-      alert("Ride is no longer available!");
-    });
-
-    return () => {
-      socket.off("available-rides");
-      socket.off("ride-no-longer-available");
-    };
-  }, [socket]); 
-
-  // ✅ Accept Ride Function (Fixed missing rideId parameter)
-  const acceptRide = () => {
-    const captainId = localStorage.getItem("captainId");
-    if (!rideData || !rideData.user) 
-    return alert("Invalid ride data!"); 
-
-    socket.emit("accept-ride", { userId: rideData.user, captainId:id });
-  };
-
   return (
     <div ref={ref} className='bg-gray-100 h-92 w-full p-5 rounded-xl animate-slide-up mt-5'>
-      <h1 className='text-lg font-semibold text-start mb-2'>Confirm Ride</h1>
+      <h1 className='text-lg font-semibold text-start mb-2'>Complete Ride</h1>
 
       <div className='space-y-4'>
         {/* Pickup Location */}
@@ -107,10 +82,10 @@ const ConfirmRidePopup = forwardRef(({ onAccept, rideData }, ref) => {
         {/* Confirm Ride Button */}
         <div className='flex gap-3 mt-6'>
           <button 
-            onClick={acceptRide}
+            
             className='w-full bg-green-500 hover:bg-green-600 text-white py-3 rounded-xl transition-colors font-medium'
           >
-            Verify & Start Ride
+            Complete Ride
           </button>
         </div>
       </div>
@@ -118,6 +93,6 @@ const ConfirmRidePopup = forwardRef(({ onAccept, rideData }, ref) => {
   );
 });
 
-ConfirmRidePopup.displayName = "ConfirmRidePopup";
+CompleteRide.displayName = "CompleteRide";
 
-export default ConfirmRidePopup;
+export default CompleteRide;

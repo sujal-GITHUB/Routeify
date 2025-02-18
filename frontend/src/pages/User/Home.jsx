@@ -1,21 +1,21 @@
 import React, { useRef, useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from 'react-redux';
-import { setRideData } from '../actions/rideActions';
-import { setUserData } from '../actions/userActions'; // Add this import
+import { setRideData } from '../../actions/rideActions';
+import { setUserData } from '../../actions/userActions'; // Add this import
 import axios from "axios";
-import logo from "../assets/logo1.png";
+import logo from "../../assets/logo1.png";
 import gsap from "gsap";
 import "remixicon/fonts/remixicon.css";
-import PickupSearchPanel from '../components/PickupLocationPanel';
-import DestinationSearchPanel from '../components/DestinationLocationPanel';
-import car from "../assets/car.png";
-import bike from "../assets/bike.png";
-import auto from "../assets/auto.png";
-import VehiclePanel from "../components/VehiclePanel";
-import FindCaptains from "../components/FindCaptains";
-import { socketContext } from "../context/socketContext";
-import { fetchUserData } from '../actions/userActions';
+import PickupSearchPanel from '../../components/User/PickupLocationPanel';
+import DestinationSearchPanel from '../../components/User/DestinationLocationPanel';
+import car from "../../assets/car.png";
+import bike from "../../assets/bike.png";
+import auto from "../../assets/auto.png";
+import VehiclePanel from "../../components/User/VehiclePanel";
+import FindCaptains from "../../components/User/FindCaptains";
+import { socketContext } from "../../context/socketContext";
+import { fetchUserData } from '../../actions/userActions';
 
 // Then, create the user reducer (userReducer.js)
 const initialState = {

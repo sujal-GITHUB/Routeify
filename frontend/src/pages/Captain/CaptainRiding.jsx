@@ -1,8 +1,8 @@
 import React, { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import gsap from "gsap";
-import logo from "../assets/logo1.png";
-import UserDetails from "../components/UserDetails";
+import logo from "../../assets/logo1.png";
+import UserDetails from "../../components/Captain/UserDetails";
 
 const CaptainRiding = () => {
   const navigate = useNavigate();

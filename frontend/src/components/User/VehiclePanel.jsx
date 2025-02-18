@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { setRideData } from '../actions/rideActions';
+import { setRideData } from '../../actions/rideActions';
 import axios from 'axios';
 
 const VehiclePanel = ({ rides, setSelectedRide }) => {

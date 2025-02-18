@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { useDispatch } from "react-redux";
-import { setUserData } from "../actions/userActions";
+import { setUserData } from "../../actions/userActions";
 import { Link } from "react-router-dom";
-import logo from "../assets/logo1.png";
+import logo from "../../assets/logo1.png";
 import { useNavigate } from "react-router-dom";
 import axios from 'axios'
 

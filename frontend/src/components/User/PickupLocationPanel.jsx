@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import axios from "axios";
-import { setRideData } from "../actions/rideActions";
+import { setRideData } from "../../actions/rideActions";
 
 const PickupLocationPanel = ({ input, setInput, setPickup }) => {
   const dispatch = useDispatch();

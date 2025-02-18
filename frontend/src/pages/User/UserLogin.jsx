@@ -1,38 +1,38 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import logo from '../assets/car1.png';
-import { setCaptainData } from '../actions/captainActions';
+import logo from '../../assets/logo1.png';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios'
+import axios from 'axios';
 import { useDispatch } from 'react-redux';
+import { setUserData } from '../../actions/userActions';
 
-const CaptainLogin = () => {
+const UserLogin = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState("");
-  const dispatch = useDispatch()
   const navigate = useNavigate()
+  const dispatch = useDispatch();
 
   const submitHandler = async (e) => {
     e.preventDefault();
-
+    
     try {
-      const response = await axios.post(`${import.meta.env.VITE_BASE_URL}/captains/login`, {
+      const response = await axios.post(`${import.meta.env.VITE_BASE_URL}/users/login`, {
         email,
         password
       });
-
-      if(response.status == 200){
-        dispatch(setCaptainData(response.data));
+      
+      if (response.status === 200) {
+        dispatch(setUserData(response.data));
 
         setEmail('');
         setPassword('');
-        localStorage.setItem('captaintoken',response.data.token)
-        navigate('/captain');
+        localStorage.setItem('usertoken',response.data.token)
+        navigate('/home');
       }
-    setTimeout(() => {
-      localStorage.removeItem('captaintoken');
-    }, 3600000); // 1 hour in milliseconds
+      setTimeout(() => {
+        localStorage.removeItem('usertoken');
+      }, 3600000); // 1 hour in milliseconds
     } catch (err) {
       if (err.response) {
         switch (err.response.status) {
@@ -56,14 +56,14 @@ const CaptainLogin = () => {
   return (
     <div className="h-screen bg-cover bg-center font-lexend flex flex-col justify-between">
       {/* Logo Section */}
-      <div className="p-5 pb-2">
-        <img src={logo} alt="Routeify Logo" className="w-16 mx-auto" />
+      <div className="p-5">
+        <img src={logo} alt="Routeify Logo" className="w-20 mx-auto" />
       </div>
 
       {/* Login Form Section */}
-      <div className="bg-white p-5 pt-0 flex h-screen flex-col items-center justify-between gap-4 rounded-t-lg">
+      <div className="bg-white p-5 flex h-screen flex-col items-center justify-between gap-4 rounded-t-lg">
         <div className="w-full">
-          <form className="w-full" onSubmit={submitHandler}>
+          <form className="w-full" onSubmit={submitHandler}> {/* Removed max-w-md */}
             <label htmlFor="email" className="font-medium mb-2 block">
               Email
             </label>
@@ -92,7 +92,7 @@ const CaptainLogin = () => {
 
             <button
               type="submit"
-              className="bg-blue-600 hover:bg-blue-700 text-white w-full p-3 rounded-md transition"
+              className="bg-black text-white w-full p-3 rounded-md transition"
             >
               Login
             </button>
@@ -103,23 +103,24 @@ const CaptainLogin = () => {
             )}
           </form>
           <p className="text-sm pt-4 text-gray-600">
-            Want to join as captain?{' '}
-            <Link to="/captain-signup" className="text-black font-semibold hover:underline">
+            Don't have an account?{' '}
+            <Link to="/signup" className="text-black font-semibold hover:underline">
               Sign up
             </Link>
           </p>
+          
         </div>
 
-        {/* Login as User Link */}
+        {/* Login as Captain Link */}
         <Link
-          to="/login"
-          className="bg-black text-white w-full mx-3 p-3 rounded-md transition text-center"
+          to="/captain-login"
+          className="bg-blue-600 text-white w-full mx-3 p-3 rounded-md hover:bg-blue-700 transition text-center"
         >
-          Login as User
+          Login as Captain
         </Link>
       </div>
     </div>
   );
 };
 
-export default CaptainLogin;
+export default UserLogin;

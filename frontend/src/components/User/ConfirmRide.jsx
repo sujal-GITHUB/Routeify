@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { setRideData } from "../actions/rideActions";
+import { setRideData } from "../../actions/rideActions";
 import gsap from "gsap";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import payment_success from "../assets/payment-success.png";
-import payment_error from "../assets/payment-error.png";
+import payment_success from "../../assets/payment-success.png";
+import payment_error from "../../assets/payment-error.png";
 
 const ConfirmRide = () => {
   const [isProcessing, setIsProcessing] = useState(false);

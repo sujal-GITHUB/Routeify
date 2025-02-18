@@ -2,18 +2,18 @@ import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { Provider } from 'react-redux';
 import store from './store'; 
-import CaptainSignup from './pages/CaptainSignUp';
-import CaptainLogin from './pages/CaptainLogin';
-import Home from './pages/Home'
+import CaptainSignup from './pages/Captain/CaptainSignUp';
+import CaptainLogin from './pages/Captain/CaptainLogin';
+import Home from './pages/User/Home'
 import Start from './pages/Start';
-import UserLogin from './pages/UserLogin';
-import UserSignUp from './pages/UserSignUp';
-import Captain from './pages/Captain'
-import UserProtectedWrapper from './pages/UserProtectedWrapper';
-import CaptainProtectedWrapper from './pages/CaptainProtectedWrapper'
-import Riding from './pages/Riding';
-import CaptainRiding from './pages/CaptainRiding';
-import RideSuccess from './pages/RideSuccess';
+import UserLogin from './pages/User/UserLogin';
+import UserSignUp from './pages/User/UserSignUp';
+import Captain from './pages/Captain/Captain'
+import UserProtectedWrapper from './pages/User/UserProtectedWrapper';
+import CaptainProtectedWrapper from './pages/Captain/CaptainProtectedWrapper'
+import Riding from './pages/User/Riding';
+import CaptainRiding from './pages/Captain/CaptainRiding';
+import RideSuccess from './pages/Captain/RideSuccess';
 
 const App = () => {
   return (

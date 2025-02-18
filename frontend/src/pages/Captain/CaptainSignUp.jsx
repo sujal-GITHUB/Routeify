@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
-import { setCaptainData } from "../actions/captainActions"; // Fixed import
-import logo from "../assets/car1.png";
+import { setCaptainData } from "../../actions/captainActions"; // Fixed import
+import logo from "../../assets/car1.png";
 import axios from "axios";
 
 const CaptainSignUp = () => {

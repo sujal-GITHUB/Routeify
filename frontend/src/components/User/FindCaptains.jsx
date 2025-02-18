@@ -1,11 +1,11 @@
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { setRideData } from '../actions/rideActions';
-import car from "../assets/car.png";
-import bike from "../assets/bike.png";
-import auto from "../assets/auto.png";
-import { socketContext } from '../context/socketContext';
+import { setRideData } from '../../actions/rideActions';
+import car from "../../assets/car.png";
+import bike from "../../assets/bike.png";
+import auto from "../../assets/auto.png";
+import { socketContext } from '../../context/socketContext';
 import axios from 'axios';
 
 const FindCaptains = () => {

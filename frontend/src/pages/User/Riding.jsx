@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import ConfirmRide from '../components/ConfirmRide';
-import logo from '../assets/logo1.png';
+import ConfirmRide from '../../components/User/ConfirmRide';
+import logo from '../../assets/logo1.png';
 import gsap from "gsap";
 
 const Riding = () => {
