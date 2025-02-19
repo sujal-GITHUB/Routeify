@@ -4,6 +4,7 @@ const authMiddleware = require('../middlewares/auth.middleware');
 const { getCoordinates } = require('../controllers/map.controller');
 const { getDistanceTime } = require('../controllers/map.controller');
 const { getSuggestions } = require('../controllers/map.controller');
+const {calculateETA} = require('../controllers/map.controller')
 const { query, validationResult } = require('express-validator');
 
 // Validation middleware
@@ -42,6 +43,12 @@ router.get('/get-suggestions',
     validateRequest,
     authMiddleware.authUser,
     getSuggestions
+)
+
+router.get('/calculate-ETA',
+    validateRequest,
+    authMiddleware.authUser,
+    calculateETA
 )
 
 module.exports = router;

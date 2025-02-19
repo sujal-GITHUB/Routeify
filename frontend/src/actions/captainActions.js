@@ -12,7 +12,6 @@ export const setCaptainData = (captainData) => ({
         headers: { Authorization: `Bearer ${token}` },
       });
 
-
       const captainData = {
         email: response.data.captain.email,
         firstname: response.data.captain.fullname.firstname,
@@ -20,7 +19,8 @@ export const setCaptainData = (captainData) => ({
         status: response.data.captain.status,
         vehicle: response.data.captain.vehicle,
         id: response.data.captain._id,
-        rating: response.data.captain.rating
+        rating: response.data.captain.rating,
+        location: response.data.captain.location
       };
   
       dispatch({

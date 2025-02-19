@@ -7,7 +7,8 @@ const initialState = {
   distance: '',
   time: '',
   vehicletype: '',
-  _id: ''  // Store ride ID
+  _id: '',
+  otp: '' 
 };
 
 const rideReducer = (state = initialState, action) => {

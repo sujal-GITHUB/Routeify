@@ -12,9 +12,9 @@ const ConfirmRide = () => {
   const [paymentStatus, setPaymentStatus] = useState(null);
   const [showPaymentMethods, setShowPaymentMethods] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [eta, setEta] = useState(null);
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const captainData = useSelector((state) => state.captain);
   const {
     user,
     captain,
@@ -24,7 +24,39 @@ const ConfirmRide = () => {
     distance,
     time,
     vehicletype,
+    otp,
   } = useSelector((state) => state.ride);
+
+  
+  const calculateETA = async () => {
+    if (!captain?.location?.coordinates || !pickup) return;
+
+    try {
+      const [captainLong, captainLat] = captain.location.coordinates;
+
+      const response = await axios.get(
+        `${import.meta.env.VITE_BASE_URL}/maps/calculate-ETA`,
+        {
+          params: { 
+            captainLat,
+            captainLong,
+            pickup
+          },
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("usertoken")}`,
+          },
+        }
+      );
+      
+      // Get the ETA in minutes, rounded up to nearest minute
+      const minutesToArrival = Math.ceil(response.data.eta);
+      setEta(minutesToArrival);
+    } catch (error) {
+      console.error("Error calculating ETA:", error);
+      // Default fallback if calculation fails
+      setEta(5);
+    }
+  };
 
   useEffect(() => {
     if (!pickup) {
@@ -58,7 +90,18 @@ const ConfirmRide = () => {
     };
 
     fetchDistanceTime();
-  }, [pickup, destination, navigate, dispatch]);
+    
+    // Initial ETA calculation
+    calculateETA();
+    
+    // Update ETA every 3 seconds
+    const etaInterval = setInterval(() => {
+      calculateETA();
+    }, 3000);
+    
+    // Clear interval on component unmount
+    return () => clearInterval(etaInterval);
+  }, [pickup, destination, navigate, dispatch, captain]);
 
   const handleCancelRide = () => {
     gsap.to(".ride-details", {
@@ -176,39 +219,48 @@ const ConfirmRide = () => {
   return (
     <div className="w-full h-full flex flex-col items-center bg-gray-100 p-5 rounded-xl animate-fade-in">
       <div className="ride-details w-full">
-        {/* Existing UI elements remain unchanged below */}
         <div className="w-full flex justify-between items-center mb-4">
           <h1 className="text-xl font-bold text-black">Reaching to you in</h1>
           <div className="bg-black text-white rounded-full px-4 py-1 text-base">
-            {2} mins
+            {eta ?? "..."} mins
           </div>
         </div>
 
         <div className="h-[2px] w-full bg-gray-300 mb-4"></div>
 
-        <div className="w-full flex items-center space-x-4 mb-4">
-          <img
-            className="h-16 w-16 rounded-full object-cover border-2 border-gray-200"
-            src="https://static.vecteezy.com/system/resources/previews/036/594/092/non_2x/man-empty-avatar-photo-placeholder-for-social-networks-resumes-forums-and-dating-sites-male-and-female-no-photo-images-for-unfilled-user-profile-free-vector.jpg"
-            alt="Driver Avatar"
-          />
-          <div className="text-black">
-            <h5 className="text-base font-medium">
-              {`${
-                captain.fullname.firstname.charAt(0).toUpperCase() +
-                captain.fullname.firstname.slice(1)
-              } ${
-                captain.fullname.lastname.charAt(0).toUpperCase() +
-                captain.fullname.lastname.slice(1)
-              }`}
-            </h5>
+        <div className="w-full flex justify-between mb-4">
+          <div className="flex items-center space-x-4">
+            <img
+              className="h-16 w-16 rounded-full object-cover border-2 border-gray-200"
+              src="https://static.vecteezy.com/system/resources/previews/036/594/092/non_2x/man-empty-avatar-photo-placeholder-for-social-networks-resumes-forums-and-dating-sites-male-and-female-no-photo-images-for-unfilled-user-profile-free-vector.jpg"
+              alt="Driver Avatar"
+            />
+            <div className="text-black">
+              <h5 className="text-base font-medium">
+                {captain?.fullname ? 
+                  `${
+                    captain.fullname.firstname.charAt(0).toUpperCase() +
+                    captain.fullname.firstname.slice(1)
+                  } ${
+                    captain.fullname.lastname.charAt(0).toUpperCase() +
+                    captain.fullname.lastname.slice(1)
+                  }` : 'Driver'}
+              </h5>
 
-            <h2 className="text-lg font-bold">{captain.vehicle.plate}</h2>
-            <h3 className="text-base">{captain.vehicle.vehicleType}</h3>
-            <h4 className="flex items-center text-base text-yellow-500">
-              <i className="ri-star-fill mr-1"></i>{captain.rating}
-            </h4>
+              <h2 className="text-lg font-bold">{captain?.vehicle?.plate || "XYZ 1234"}</h2>
+              <h3 className="text-base">{captain?.vehicle?.vehicleType || "Car"}</h3>
+              <h4 className="flex items-center text-base text-yellow-500">
+                <i className="ri-star-fill mr-1"></i>{captain?.rating || "4.5"}
+              </h4>
+            </div>
           </div>
+          
+          {otp && (
+            <div className="flex flex-col items-center justify-center bg-gray-50 px-4 py-1 rounded-lg border border-gray-300">
+              <span className="text-xs text-black font-semibold mb-1">OTP</span>
+              <span className="text-2xl font-bold text-black">{otp}</span>
+            </div>
+          )}
         </div>
 
         <div className="w-full flex justify-around text-xl text-white mt-6 mb-4">

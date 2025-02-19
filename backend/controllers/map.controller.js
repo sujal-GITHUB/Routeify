@@ -37,8 +37,36 @@ const getSuggestions = async (req, res) => {
     }
 }
 
+const calculateETA = async (req, res) => {
+    try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() });
+        }
+        
+        const { captainLat, captainLong, pickup } = req.query;
+        
+        if (!captainLat || !captainLong || !pickup) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Captain coordinates and pickup location are required' 
+            });
+        }
+        
+        const result = await mapsService.calculateETA(captainLat, captainLong, pickup);
+        return res.json(result);
+    } catch (error) {
+        console.error('Error calculating ETA:', error);
+        return res.status(500).json({ 
+            success: false, 
+            message: error.message || 'Failed to calculate ETA' 
+        });
+    }
+};
+
 module.exports = {
     getCoordinates,
     getDistanceTime,
-    getSuggestions
+    getSuggestions,
+    calculateETA
 };

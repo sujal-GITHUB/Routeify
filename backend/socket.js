@@ -158,8 +158,8 @@ const initializeSocket = (server) => {
                   })
                   .populate({
                     path: 'captain',
-                    select: 'fullname vehicle rating socketId'
-                  });
+                    select: 'fullname vehicle rating socketId location'
+                  }).select('+otp');
               
 
                 if (!ride) {
@@ -184,7 +184,8 @@ const initializeSocket = (server) => {
                     data: {
                         captain: ride.captain,
                         rideId: ride._id,
-                        status: 'accepted'
+                        status: 'accepted',
+                        otp: ride.otp
                     }
                 });
 
@@ -231,20 +232,12 @@ const initializeSocket = (server) => {
                     { new: true }
                 );
 
-                if (captain) {
-                    console.log(`🚨 Captain ${captain._id} disconnected and set to inactive.`);
-                }
-
                 // Also update user if needed
                 const user = await userModel.findOneAndUpdate(
                     { socketId: socket.id },
                     { socketId: null },
                     { new: true }
                 );
-
-                if (user) {
-                    console.log(`👤 User ${user._id} disconnected.`);
-                }
 
             } catch (error) {
                 console.error("❌ Error handling disconnect:", error);

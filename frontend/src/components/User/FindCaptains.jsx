@@ -99,8 +99,9 @@ const FindCaptains = () => {
           status: 'accepted',
           captain: data.captain, 
           rideId: data.rideId,
+          otp: data.otp,  
         };
-    
+
         dispatch(setRideData(updatedRideData));
         navigate('/riding');
       }
@@ -141,12 +142,11 @@ const FindCaptains = () => {
     rideCreatedRef.current = false;
     navigate('/home');
   };
-  
 
   return (
     <div className="w-full flex flex-col items-center bg-gray-100 p-5 rounded-xl animate-fade-in">
       <h1 className="text-xl font-bold text-black w-full text-center">
-        {ride.status === 'pending' ? 'Finding captains nearby...' : 'Captain found! Redirecting...'}
+        Finding captains nearby...
       </h1>
 
       <div className="w-full flex flex-col items-center space-y-4">

@@ -147,3 +147,45 @@ module.exports.getCaptainsInTheRadius = async (latitude, longitude, radius) => {
 
 
 
+module.exports.calculateETA = async (captainLat, captainLong, pickup) => {
+    if (!captainLat || !captainLong || !pickup) {
+        throw new Error('Captain coordinates and pickup location are required.');
+    }
+
+    try {
+        const apiKey = process.env.GOMAPS_API_KEY;
+        if (!apiKey) {
+            throw new Error('GoMaps API key is not configured. Please set GOMAPS_API_KEY in your environment variables.');
+        }
+
+        // Format captain's coordinates in "lat,lng" format for the API
+        const origin = `${captainLat},${captainLong}`;
+        
+        // Destination is the pickup location (could be an address string)
+        const destination = pickup;
+
+        const url = `https://maps.gomaps.pro/maps/api/distancematrix/json?origins=${encodeURIComponent(origin)}&destinations=${encodeURIComponent(destination)}&key=${apiKey}`;
+        const response = await axios.get(url);
+
+        if (!response.data || response.data.status !== 'OK') {
+            throw new Error(response.data?.error_message || 'Failed to calculate ETA. Please check coordinates or API key.');
+        }
+
+        const element = response.data.rows?.[0]?.elements?.[0];
+        if (!element || element.status !== 'OK') {
+            throw new Error('No valid route found to the pickup location.');
+        }
+
+        const durationSeconds = element.duration.value;
+        const etaMinutes = Math.ceil(durationSeconds / 60);
+
+        return {
+            eta: etaMinutes,
+            distance: element.distance.text,
+            durationText: element.duration.text
+        };
+
+    } catch (error) {
+        throw new Error(error.response?.data?.error_message || error.message || 'An error occurred while calculating ETA.');
+    }
+};

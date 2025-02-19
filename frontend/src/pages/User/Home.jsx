@@ -17,41 +17,6 @@ import FindCaptains from "../../components/User/FindCaptains";
 import { socketContext } from "../../context/socketContext";
 import { fetchUserData } from '../../actions/userActions';
 
-// Then, create the user reducer (userReducer.js)
-const initialState = {
-  id: null,
-  name: '',
-  email: '',
-  phone: '',
-  isLoading: false,
-  error: null
-};
-
-export const userReducer = (state = initialState, action) => {
-  switch (action.type) {
-    case 'SET_USER_DATA':
-      return {
-        ...state,
-        ...action.payload,
-        isLoading: false,
-        error: null
-      };
-    case 'SET_USER_LOADING':
-      return {
-        ...state,
-        isLoading: true
-      };
-    case 'SET_USER_ERROR':
-      return {
-        ...state,
-        error: action.payload,
-        isLoading: false
-      };
-    default:
-      return state;
-  }
-};
-
 const Home = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();

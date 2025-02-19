@@ -47,8 +47,6 @@ module.exports.createRide = async (req, res) => {
 
         ride.otp = ""
         activeCaptains.forEach(captain => {
-            console.log(`📩 Notifying captain ${captain.socketId} about new ride`);
-            
             sendMessageToSocketId(captain.socketId, {
                 event: 'new-ride',
                 data: ride
