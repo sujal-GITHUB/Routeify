@@ -2,10 +2,12 @@ import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { setRideData } from "../../actions/rideActions";
 import gsap from "gsap";
+import { useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import payment_success from "../../assets/payment-success.png";
 import payment_error from "../../assets/payment-error.png";
+import { socketContext } from "../../context/socketContext";
 
 const ConfirmRide = () => {
   const [isProcessing, setIsProcessing] = useState(false);
@@ -14,6 +16,7 @@ const ConfirmRide = () => {
   const [loading, setLoading] = useState(true);
   const [eta, setEta] = useState(null);
   const dispatch = useDispatch();
+  const {socket} = useContext(socketContext);
   const navigate = useNavigate();
   const {
     user,
@@ -23,10 +26,17 @@ const ConfirmRide = () => {
     price,
     distance,
     time,
-    vehicletype,
     otp,
   } = useSelector((state) => state.ride);
 
+  useEffect(() => {
+    if (captain?.socketId && otp) {
+      socket.emit("send-otp", {
+        otp: otp,
+        socketId: captain.socketId
+      });
+    }
+  }, [socket, captain?.socketId, otp]);
   
   const calculateETA = async () => {
     if (!captain?.location?.coordinates || !pickup) return;

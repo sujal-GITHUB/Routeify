@@ -8,7 +8,7 @@ import auto from "../../assets/auto.png";
 import { socketContext } from '../../context/socketContext';
 import axios from 'axios';
 
-const FindCaptains = () => {
+const FindCaptains = ({setShowFindCaptains}) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { socket } = useContext(socketContext);
@@ -133,14 +133,10 @@ const FindCaptains = () => {
       socket.emit('cancel-ride', { rideId: ride._id });
     }
     dispatch(setRideData({
-      pickup: '',
-      destination: '',
-      price: '',
       vehicletype: '',
-      status: 'cancelled'
     }));
     rideCreatedRef.current = false;
-    navigate('/home');
+    setShowFindCaptains(false);
   };
 
   return (

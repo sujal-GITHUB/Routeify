@@ -223,6 +223,10 @@ const initializeSocket = (server) => {
             }
         });
 
+        socket.on('send-otp', async(data)=>{
+            io.to(data.socketId).emit("receive-otp", { otp: data.otp });
+        })
+
         socket.on("disconnect", async () => {
             try {
                 // Find and update captain

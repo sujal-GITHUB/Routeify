@@ -5,6 +5,7 @@ import { setRideData } from '../../actions/rideActions';
 import { setUserData } from '../../actions/userActions'; // Add this import
 import axios from "axios";
 import logo from "../../assets/logo1.png";
+import initialState from '../../reducers/userReducer'; // Add this import
 import gsap from "gsap";
 import "remixicon/fonts/remixicon.css";
 import PickupSearchPanel from '../../components/User/PickupLocationPanel';
@@ -265,8 +266,8 @@ const Home = () => {
       const response = await axios.get(`${import.meta.env.VITE_BASE_URL}/users/logout`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      
-      if (response.status === 200) {
+
+      if (response.status === 200) {  
         localStorage.removeItem("usertoken");
         dispatch(setUserData(initialState));
         navigate("/login");
@@ -420,6 +421,7 @@ const Home = () => {
           >
             {showFindCaptains && (
               <FindCaptains 
+                setShowFindCaptains = {setShowFindCaptains}
                 pickup={pickup} 
                 destination={destination} 
                 selectedRide={selectedRide} 

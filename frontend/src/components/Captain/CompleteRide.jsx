@@ -1,14 +1,79 @@
 import React, { useState, forwardRef, useEffect, useContext } from 'react';
 import { socketContext } from '../../context/socketContext';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 
 const CompleteRide = forwardRef(({ onAccept, rides, rideData }, ref) => {
   const [showFullP, setShowFullP] = useState(false);
   const [showFullD, setShowFullD] = useState(false);
+  const [otpValue, setOtpValue] = useState('');
+  const [receivedOtp, setReceivedOtp] = useState(''); // Add this state
+  const dispatch = useDispatch();
   const captainData = useSelector((state) => state.captain);
+  const rideState = useSelector(state => state.ride);
   const { firstname, lastname, earning, rating, status, id } = captainData;
 
   const {socket} = useContext(socketContext);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    socket.on("receive-otp", (data) => {
+      if (data && data.otp) {
+        const otpNumber = data.otp.toString();
+        setReceivedOtp(otpNumber); // Store in state instead of local variable
+        console.log('Received OTP:', otpNumber);
+      }
+    });
+  
+    return () => {
+      socket.off("receive-otp");
+    };
+  }, [socket, dispatch]);
+
+  const handleOtpChange = (e) => {
+    const value = e.target.value.replace(/[^0-9]/g, '');
+    if (value.length <= 6) {
+      setOtpValue(value);
+    }
+  };
+
+  const verifyOtpAndComplete = async () => {
+    try {
+      if (!otpValue) {
+        alert('Please enter OTP');
+        return;
+      }
+
+      console.log('otpValue:', otpValue);
+      console.log('receivedOtp:', receivedOtp);
+
+      if (otpValue === receivedOtp) {
+        // Emit ride completion event
+        socket.emit('ride-completed', {
+          rideId: rideData._id,
+          captainId: id,
+          otp: otpValue
+        });
+
+        // Clear OTP input
+        setOtpValue('');
+        
+        // Navigate to success page
+        navigate('/ride-success', {
+          state: {
+            fare: rideData?.fare,
+            pickup: rideData?.pickup,
+            destination: rideData?.destination
+          }
+        });
+      } else {
+        alert('Invalid OTP. Please check and try again.');
+      }
+    } catch (error) {
+      console.error('Error completing ride:', error);
+      alert('Failed to complete ride. Please try again.');
+    }
+  };
 
   return (
     <div ref={ref} className='bg-gray-100 h-92 w-full p-5 rounded-xl animate-slide-up mt-5'>
@@ -68,8 +133,10 @@ const CompleteRide = forwardRef(({ onAccept, rides, rideData }, ref) => {
             <input 
               type="text"
               id="otp"
-              maxLength={4}
-              placeholder="••••"
+              value={otpValue}
+              onChange={handleOtpChange}
+              maxLength={6}
+              placeholder="••••••"
               className='w-9/12 px-6 py-2 text-xl tracking-[0.5em] font-bold text-center 
                 bg-gray-50 border-2 border-gray-200 rounded-xl 
                 focus:ring-2 focus:ring-green-500 focus:border-green-500 
@@ -82,7 +149,7 @@ const CompleteRide = forwardRef(({ onAccept, rides, rideData }, ref) => {
         {/* Confirm Ride Button */}
         <div className='flex gap-3 mt-6'>
           <button 
-            
+            onClick={verifyOtpAndComplete}
             className='w-full bg-green-500 hover:bg-green-600 text-white py-3 rounded-xl transition-colors font-medium'
           >
             Complete Ride
