@@ -264,33 +264,6 @@ const initializeSocket = (server) => {
             }
         });
 
-        socket.on('send-otp', async(data) => {
-            try {
-
-                if (!data.socketId || !data.otp) {
-                    return socket.emit("error", { message: "Missing socketId or OTP" });
-                }
-
-                // Convert OTP to string and trim any whitespace
-                const otpString = data.otp.toString().trim();
-                
-                // Send OTP to captain
-                sendMessageToSocketId(data.socketId, {
-                    event: 'receive-otp',
-                    data: { otp: otpString }
-                });
-                
-                // Confirm OTP was sent
-                socket.emit('otp-sent-confirmation', {
-                    success: true,
-                    socketId: data.socketId
-                });
-            } catch (error) {
-                console.error('Send OTP error:', error);
-                socket.emit("error", { message: "Failed to send OTP" });
-            }
-        });
-
         socket.on('confirm-ride', async ({ rideId, userId }) => {
             try {
                 if (!rideId || !userId) {
@@ -308,13 +281,13 @@ const initializeSocket = (server) => {
                 .populate({
                     path: 'captain',
                     select: 'socketId fullname vehicle rating location'
-                });
-            
+                })
+                .select('+otp'); 
+
                 if (!ride) {
                     return socket.emit("error", { message: "Ride not found" });
                 }
-            
-                // Notify captain that ride is confirmed
+
                 if (ride.captain?.socketId) {
                     sendMessageToSocketId(ride.captain.socketId, {
                         event: 'ride-confirmed',
@@ -323,20 +296,16 @@ const initializeSocket = (server) => {
                             pickup: ride.pickup,
                             destination: ride.destination,
                             fare: ride.fare,
-                            otp: ride.otp,
-                            user: {
-                                id: userId,
-                                // Add any other user details you want to send
-                            }
+                            otp: ride.otp
                         }
                     });
                 }
-            
-                // Send confirmation to user
+
+                // Send success to user
                 socket.emit('ride-confirmation-success', {
                     message: 'Ride confirmed successfully'
                 });
-            
+
             } catch (error) {
                 console.error('Ride confirmation error:', error);
                 socket.emit("error", { message: "Failed to confirm ride" });

@@ -10,6 +10,7 @@ import { fetchCaptainData } from "../../actions/captainActions";
 import { socketContext } from "../../context/socketContext";
 import CompleteRide from "../../components/Captain/CompleteRide";
 import WaitingForUser from "../../components/Captain/WaitingForUser";
+import { updateCurrentRide } from '../../actions/rideActions';
 
 // Add this helper function at the top of your component
 const getMidnightTime = () => {
@@ -36,6 +37,7 @@ const Captain = () => {
 
   const locationIntervalRef = useRef(null);
   const captainData = useSelector((state) => state.captain);
+  const rideData = useSelector((state) => state.ride);
   const { firstname, lastname, earning, rating, hoursOnline, status, id } = captainData;
 
   // Fetch captain data on mount
@@ -79,6 +81,12 @@ const Captain = () => {
   useEffect(() => {
     socket.on("new-ride", (data) => {
       console.log("🚖 New ride received:", data);
+      // Update Redux store with new ride data
+      dispatch(updateCurrentRide({
+          ...data,
+          status: 'pending'
+      }));
+      // Update local state
       setNewRide(data);
       setShowConfirmRide(true);
       setRideAccepted(false);
@@ -86,14 +94,21 @@ const Captain = () => {
     });
 
     socket.on("ride-confirmed", (data) => {
-      // When user confirms, show CompleteRide panel
+      // Update Redux store with confirmed status
+      dispatch(updateCurrentRide({
+          ...data,
+          status: 'confirmed'
+      }));
+      // Update local state
       setRideStart(true);
       setRideAccepted(false);
       setShowConfirmRide(false);
     });
 
     socket.on("ride-cancelled", () => {
-      // Reset everything on cancel
+      // Clear ride data from Redux
+      dispatch(updateCurrentRide(initialState));
+      // Reset local state
       setNewRide(null);
       setRideAccepted(false);
       setRideStart(false);
@@ -105,7 +120,7 @@ const Captain = () => {
       socket.off("ride-confirmed");
       socket.off("ride-cancelled");
     };
-  }, [socket]);
+  }, [socket, dispatch]);
 
   // Handle confirm ride animation
   useEffect(() => {
@@ -260,7 +275,7 @@ const Captain = () => {
       console.error("Failed to update status:", error);
     }
   };
-
+  
   return (
     <div className="h-screen font-lexend relative">
       {/* Background */}

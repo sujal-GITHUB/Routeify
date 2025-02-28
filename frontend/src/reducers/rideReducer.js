@@ -1,28 +1,37 @@
+import { SET_RIDE_DATA, UPDATE_CURRENT_RIDE } from '../actions/rideActions';
+
 const initialState = {
-  user: {},  // Should store user details
-  captain: {}, // Should store captain details if assigned
-  pickup: '',
-  destination: '',
-  price: '',
-  distance: '',
-  time: '',
-  vehicletype: '',
-  _id: '',
-  otp: '' 
+    user: {},
+    captain: {},
+    pickup: '',
+    destination: '',
+    price: '',
+    distance: '',
+    time: '',
+    vehicletype: '',
+    _id: '',
+    otp: '',
+    status: ''
 };
 
 const rideReducer = (state = initialState, action) => {
-  switch (action.type) {
-    case 'SET_RIDE_DATA':
-      return {
-        ...state,
-        ...action.payload  // Updating state with ride data
-      };
-    case 'CLEAR_RIDE':
-      return initialState; // Reset ride data when needed
-    default:
-      return state;
-  }
+    switch (action.type) {
+        case SET_RIDE_DATA:
+            return {
+                ...state,
+                ...action.payload
+            };
+        case UPDATE_CURRENT_RIDE:
+            return {
+                ...state,
+                ...action.payload,
+                status: action.payload.status || state.status
+            };
+        case 'CLEAR_RIDE':
+            return initialState;
+        default:
+            return state;
+    }
 };
 
 export default rideReducer;

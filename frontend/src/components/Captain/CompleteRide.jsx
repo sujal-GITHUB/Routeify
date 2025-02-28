@@ -7,32 +7,15 @@ const CompleteRide = forwardRef(({ onAccept, rides, rideData }, ref) => {
   const [showFullP, setShowFullP] = useState(false);
   const [showFullD, setShowFullD] = useState(false);
   const [otpValue, setOtpValue] = useState('');
-  const [receivedOtp, setReceivedOtp] = useState('');
   const dispatch = useDispatch();
   const captainData = useSelector((state) => state.captain);
   const rideState = useSelector(state => state.ride);
+  const {otp} = rideState;
   const { firstname, lastname, earning, rating, status, id } = captainData;
 
   const {socket} = useContext(socketContext);
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const handleOtpReceived = (data) => {
-        console.log('Received OTP data:', data);
-        if (data && data.otp) {
-            const otpString = data.otp.toString();
-            setReceivedOtp(otpString);
-            console.log('Stored OTP:', otpString);
-        }
-    };
-
-    socket.off("receive-otp");
-    socket.on("receive-otp", handleOtpReceived);
-
-    return () => {
-        socket.off("receive-otp", handleOtpReceived);
-    };
-  }, [socket]);
+  const otpComp = otp.toString();
 
   const handleOtpChange = (e) => {
     const value = e.target.value.replace(/[^0-9]/g, '');
@@ -48,9 +31,9 @@ const CompleteRide = forwardRef(({ onAccept, rides, rideData }, ref) => {
         return;
       }
 
-      console.log('Verifying OTP:', otpValue, 'against:', receivedOtp);
+      console.log('Verifying OTP:', otpValue, 'against:', otpComp);
 
-      if (otpValue === receivedOtp) {
+      if (otpValue === otpComp) {
         socket.emit('ride-completed', {
           rideId: rideData._id,
           captainId: captainData.id,
