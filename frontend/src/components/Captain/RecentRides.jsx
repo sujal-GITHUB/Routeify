@@ -2,13 +2,9 @@ import React from "react";
 import { useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 
-const RecentRides = () => {
+const RecentRides = ( ) => {
   const captainData = useSelector((state) => state.captain);
-  const {
-    hoursOnline,
-    kmDriven,
-    totalRide
-  } = captainData;
+  const { hoursOnline} = captainData;
 
   return (
     <div>
@@ -20,12 +16,12 @@ const RecentRides = () => {
         </div>
         <div className="bg-gray-100 p-4 rounded-xl text-center">
           <i className="ri-route-line text-2xl text-black"></i>
-          <h4 className="text-xl font-bold mt-2">{kmDriven}</h4>
+          <h4 className="text-xl font-bold mt-2">{0}</h4>
           <p className="text-xs text-gray-500">Km Driven</p>
         </div>
         <div className="bg-gray-100 p-4 rounded-xl text-center">
           <i className="ri-taxi-line text-2xl text-black"></i>
-          <h4 className="text-xl font-bold mt-2">{totalRide}</h4>
+          <h4 className="text-xl font-bold mt-2">{0}</h4>
           <p className="text-xs text-gray-500">Rides</p>
         </div>
       </div>

@@ -1,14 +1,38 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import gsap from 'gsap';
 import confetti from 'canvas-confetti';
 
 const RideSuccess = () => {
   const navigate = useNavigate();
-  const { pickup, destination, price } = useSelector(state => state.ride);
-
+  const location = useLocation();
+  const [rideDetails, setRideDetails] = useState(null);
+  
+  // Get data from both location state and Redux
+  const rideState = useSelector(state => state.ride);
+  
   useEffect(() => {
+    // Try to get data from location state first, then fallback to Redux
+    const locationData = location.state;
+    const reduxData = {
+      pickup: rideState.pickup,
+      destination: rideState.destination,
+      fare: rideState.fare
+    };
+
+    // Use location state if available, otherwise use Redux state
+    const rideData = locationData || reduxData;
+
+    // Validate if we have the required data
+    if (!rideData.pickup || !rideData.destination) {
+      console.log('No ride data found, redirecting to captain page');
+      navigate('/captain');
+      return;
+    }
+
+    setRideDetails(rideData);
+
     // Trigger confetti
     confetti({
       particleCount: 100,
@@ -21,7 +45,17 @@ const RideSuccess = () => {
       { opacity: 0, y: 20 },
       { opacity: 1, y: 0, duration: 0.5, stagger: 0.1 }
     );
-  }, []);
+
+    return () => {
+      gsap.killTweensOf('.success-content');
+    };
+  }, [location.state, rideState, navigate]);
+
+  if (!rideDetails) {
+    return null;
+  }
+
+  const { pickup, destination, fare } = rideDetails;
 
   return (
     <div className="h-screen font-lexend bg-white flex flex-col items-center justify-center p-5">
@@ -36,16 +70,16 @@ const RideSuccess = () => {
       <div className="success-content w-full max-w-md bg-gray-50 rounded-xl p-5 mb-6">
         <div className="space-y-4">
           <div>
-            <p className="text-sm text-gray-500">From</p>
-            <p className="font-medium">{pickup}</p>
+            <span className="text-sm text-gray-500">From : </span>
+            <span className="font-medium text-sm">{pickup}</span>
           </div>
           <div>
-            <p className="text-sm text-gray-500">To</p>
-            <p className="font-medium">{destination}</p>
+            <span className="text-sm text-gray-500">To : </span>
+            <span className="font-medium text-sm">{destination}</span>
           </div>
           <div className="border-t pt-4">
-            <p className="text-sm text-gray-500">Total Fare</p>
-            <p className="text-2xl font-bold text-green-500">{price}</p>
+            <span className="text-sm text-gray-500">Total Fare : </span>
+            <span className="font-semibold text-sm text-green-500">₹{fare}</span>
           </div>
         </div>
       </div>

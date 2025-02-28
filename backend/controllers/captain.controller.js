@@ -124,7 +124,7 @@ module.exports.logoutCaptain = async (req,res) =>{
 }
 
 module.exports.updateCaptainProfile = async (req, res) => {
-    const { firstname, lastname, email, vehicle, status, rating } = req.body;
+    const { firstname, lastname, email, vehicle, status, rating, hoursOnline } = req.body;
 
     try {   
         // Check if the captain exists
@@ -139,6 +139,7 @@ module.exports.updateCaptainProfile = async (req, res) => {
         if (email) captain.email = email;
         if (rating) captain.rating = rating;
         if (status) captain.status = status;
+        if (hoursOnline) captain.hoursOnline = hoursOnline;
 
         // Update vehicle information if provided
         if (vehicle) {

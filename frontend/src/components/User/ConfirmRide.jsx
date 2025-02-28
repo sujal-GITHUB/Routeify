@@ -24,19 +24,11 @@ const ConfirmRide = () => {
     pickup,
     destination,
     price,
+    _id,
     distance,
     time,
     otp,
   } = useSelector((state) => state.ride);
-
-  useEffect(() => {
-    if (captain?.socketId && otp) {
-      socket.emit("send-otp", {
-        otp: otp,
-        socketId: captain.socketId
-      });
-    }
-  }, [socket, captain?.socketId, otp]);
   
   const calculateETA = async () => {
     if (!captain?.location?.coordinates || !pickup) return;
@@ -193,11 +185,62 @@ const ConfirmRide = () => {
 
   const handleButtonClick = (isLeftButton) => {
     if (showPaymentMethods) {
-      isLeftButton ? handlePayment("cash") : handlePayment("online");
+        isLeftButton ? handlePayment("cash") : handlePayment("online");
     } else {
-      isLeftButton ? handleCancelRide() : setShowPaymentMethods(true);
+        if (isLeftButton) {
+            handleCancelRide();
+        } else {
+            // First send OTP to captain
+            if (captain?.socketId && otp) {
+                socket.emit("send-otp", {
+                    otp: otp.toString(),
+                    socketId: captain.socketId
+                });
+            }
+
+            // Then emit confirm-ride event
+            socket.emit('confirm-ride', {
+                rideId: _id,
+                userId: user
+            });
+
+            socket.on('ride-confirmation-success', () => {
+                setShowPaymentMethods(true);
+            });
+
+            socket.on('error', (error) => {
+                console.error('Error:', error);
+                alert('Failed to confirm ride. Please try again.');
+            });
+        }
     }
-  };
+};
+
+// Update the cleanup useEffect
+useEffect(() => {
+    return () => {
+        socket.off('otp-sent-confirmation');
+        socket.off('ride-confirmation-success');
+        socket.off('error');
+    };
+}, [socket]);
+
+useEffect(() => {
+    socket.on('ride-completed', (data) => {
+        // Navigate to success page with ride data
+        navigate('/success', {
+            state: {
+                pickup: data.pickup,
+                destination: data.destination,
+                fare: data.fare
+            }
+        });
+    });
+
+    return () => {
+        socket.off('ride-completed');
+    };
+}, [socket, navigate]);
 
   if (loading) {
     return (

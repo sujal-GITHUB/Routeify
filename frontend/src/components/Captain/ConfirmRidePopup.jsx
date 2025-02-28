@@ -2,7 +2,7 @@ import React, { useState, forwardRef, useEffect, useContext } from 'react';
 import { socketContext } from '../../context/socketContext';
 import { useSelector } from 'react-redux';
 
-const ConfirmRidePopup = forwardRef(({ setRides, onAccept, rideData, setRideStart }, ref) => {
+const ConfirmRidePopup = forwardRef(({ setRides, onAccept, rideData }, ref) => {
   const [showFullP, setShowFullP] = useState(false);
   const [showFullD, setShowFullD] = useState(false);
   
@@ -28,11 +28,14 @@ const ConfirmRidePopup = forwardRef(({ setRides, onAccept, rideData, setRideStar
 
   // ✅ Accept Ride Function (Fixed missing rideId parameter)
   const acceptRide = () => {
-    const captainId = localStorage.getItem("captainId");
-    if (!rideData || !rideData.user) 
-    return alert("Invalid ride data!"); 
-    setRideStart(true)
-    socket.emit("accept-ride", { userId: rideData.user, captainId:id });
+    if (!rideData || !rideData.user) {
+      return alert("Invalid ride data!");
+    }
+    socket.emit("accept-ride", { 
+      userId: rideData.user, 
+      captainId: id 
+    });
+    onAccept(); // This triggers handleAccept in Captain.jsx
   };
 
   return (

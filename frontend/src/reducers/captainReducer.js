@@ -38,7 +38,7 @@ const captainReducer = (state = initialState, action) => {
         vehicleType: action.payload.vehicle.vehicleType || "",
         capacity: action.payload.vehicle.capacity || '',
         earning: isNewDay ? 0 : action.payload.earning || 0,
-        hoursOnline: isNewDay ? 0 : action.payload.hoursOnline || 0,
+        hoursOnline: isNewDay ? 0 : action.payload.hoursOnline ,
         kmDriven: isNewDay ? 0 : action.payload.kmDriven || 0,
         totalRide: isNewDay ? 0 : action.payload.totalRide || 0,
         rating: action.payload.rating ,
@@ -55,6 +55,12 @@ const captainReducer = (state = initialState, action) => {
         ...state,
         loading: false,
         error: action.payload,
+      };
+
+    case 'UPDATE_CAPTAIN_HOURS':
+      return {
+        ...state,
+        hoursOnline: action.payload
       };
 
     default:

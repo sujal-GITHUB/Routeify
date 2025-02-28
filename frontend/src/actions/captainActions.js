@@ -16,11 +16,12 @@ export const setCaptainData = (captainData) => ({
         email: response.data.captain.email,
         firstname: response.data.captain.fullname.firstname,
         lastname: response.data.captain.fullname.lastname,
-        status: response.data.captain.status,
+        status: response.data.captain.status || 'inactive', // Ensure default status
         vehicle: response.data.captain.vehicle,
         id: response.data.captain._id,
         rating: response.data.captain.rating,
-        location: response.data.captain.location
+        location: response.data.captain.location,
+        hoursOnline: response.data.captain.hoursOnline || 0,
       };
   
       dispatch({

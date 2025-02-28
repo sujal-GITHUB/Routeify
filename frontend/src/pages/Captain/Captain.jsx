@@ -9,6 +9,15 @@ import { useSelector, useDispatch } from "react-redux";
 import { fetchCaptainData } from "../../actions/captainActions";
 import { socketContext } from "../../context/socketContext";
 import CompleteRide from "../../components/Captain/CompleteRide";
+import WaitingForUser from "../../components/Captain/WaitingForUser";
+
+// Add this helper function at the top of your component
+const getMidnightTime = () => {
+  const now = new Date();
+  const midnight = new Date(now);
+  midnight.setHours(24, 0, 0, 0);
+  return midnight.getTime();
+};
 
 const Captain = () => {
   const navigate = useNavigate();
@@ -22,11 +31,12 @@ const Captain = () => {
   const [isPanelDown, setIsPanelDown] = useState(false);
   const [showConfirmRide, setShowConfirmRide] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [isActive, setIsActive] = useState(false);
+  const [rideAccepted, setRideAccepted] = useState(false);
+  const activeTimeRef = useRef(null);
 
   const locationIntervalRef = useRef(null);
   const captainData = useSelector((state) => state.captain);
-  const { firstname, lastname, earning, rating, status, id } = captainData;
+  const { firstname, lastname, earning, rating, hoursOnline, status, id } = captainData;
 
   // Fetch captain data on mount
   useEffect(() => {
@@ -71,9 +81,30 @@ const Captain = () => {
       console.log("🚖 New ride received:", data);
       setNewRide(data);
       setShowConfirmRide(true);
+      setRideAccepted(false);
+      setRideStart(false);
     });
 
-    return () => socket.off("new-ride");
+    socket.on("ride-confirmed", (data) => {
+      // When user confirms, show CompleteRide panel
+      setRideStart(true);
+      setRideAccepted(false);
+      setShowConfirmRide(false);
+    });
+
+    socket.on("ride-cancelled", () => {
+      // Reset everything on cancel
+      setNewRide(null);
+      setRideAccepted(false);
+      setRideStart(false);
+      setShowConfirmRide(false);
+    });
+
+    return () => {
+      socket.off("new-ride");
+      socket.off("ride-confirmed");
+      socket.off("ride-cancelled");
+    };
   }, [socket]);
 
   // Handle confirm ride animation
@@ -96,10 +127,74 @@ const Captain = () => {
     }
   }, [showConfirmRide]);
 
-  // Set captain's status
+  // Track active time and update backend
   useEffect(() => {
-    if (status) setIsActive(status === "active");
-  }, [status]);
+    let updateInterval;
+    let midnightReset;
+  
+    const updateHoursInBackend = async (hours) => {
+      try {
+        const token = localStorage.getItem("captaintoken");
+        await axios.post(
+          `${import.meta.env.VITE_BASE_URL}/captains/update`,
+          { hoursOnline: hours },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        // Fetch updated captain data after updating hours
+        await dispatch(fetchCaptainData());
+      } catch (error) {
+        console.error("Failed to update hours:", error);
+      }
+    };
+  
+    if (status === 'active') {
+      const startTime = Date.now();
+      const baseHours = hoursOnline || 0;
+  
+      // Update hours and fetch data every minute
+      updateInterval = setInterval(() => {
+        const elapsedHours = (Date.now() - startTime) / (1000 * 60 * 60);
+        const totalHours = Number((baseHours + elapsedHours).toFixed(2));
+        dispatch({ type: 'UPDATE_CAPTAIN_HOURS', payload: totalHours });
+        updateHoursInBackend(totalHours);
+      }, 60000);
+  
+      // Set up midnight reset
+      const timeUntilMidnight = getMidnightTime() - Date.now();
+      midnightReset = setTimeout(() => {
+        dispatch({ type: 'UPDATE_CAPTAIN_HOURS', payload: 0 });
+        updateHoursInBackend(0);
+      }, timeUntilMidnight);
+    }
+  
+    return () => {
+      if (updateInterval) clearInterval(updateInterval);
+      if (midnightReset) clearTimeout(midnightReset);
+    };
+  }, [status, hoursOnline, dispatch]);
+
+  useEffect(() => {
+    socket.on("ride-confirm", (data) => {
+      setRideAccepted(false);
+    });
+
+    socket.on("ride-confirmed", (data) => {
+      // When user confirms the ride, show CompleteRide panel
+      setRideStart(true);
+    });
+
+    socket.on("ride-cancelled", () => {
+      // When user cancels, reset everything
+      setNewRide(null);
+      setRideAccepted(false);
+      setRideStart(false);
+    });
+
+    return () => {
+      socket.off("ride-confirmed");
+      socket.off("ride-cancelled");
+    };
+  }, [socket]);
 
   if (loading) return <div>Loading captain data...</div>;
 
@@ -138,7 +233,8 @@ const Captain = () => {
       ease: "power3.in",
       onComplete: () => {
         setShowConfirmRide(false);
-        setNewRide(null);
+        setRideAccepted(true);
+        setRideStart(false);
       },
     });
   };
@@ -147,16 +243,21 @@ const Captain = () => {
   const toggleActiveStatus = async () => {
     try {
       const token = localStorage.getItem("captaintoken");
-      const newStatus = isActive ? "inactive" : "active";
-      setIsActive(!isActive);
+      const newStatus = status === 'active' ? "inactive" : "active";
+      
       await axios.post(
         `${import.meta.env.VITE_BASE_URL}/captains/update`,
-        { status: newStatus },
+        { 
+          status: newStatus,
+          hoursOnline: hoursOnline 
+        },
         { headers: { Authorization: `Bearer ${token}` } }
       );
+
+      // Fetch updated data from backend
+      dispatch(fetchCaptainData());
     } catch (error) {
       console.error("Failed to update status:", error);
-      setIsActive(isActive);
     }
   };
 
@@ -189,18 +290,18 @@ const Captain = () => {
               <input
                 type="checkbox"
                 className="sr-only peer"
-                checked={isActive}
+                checked={status === 'active'}
                 onChange={toggleActiveStatus}
               />
               <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-green-500 flex items-center">
                 <div
                   className={`w-4 h-4 bg-white rounded-full shadow-md transform transition-transform duration-300 ${
-                    isActive ? "translate-x-6" : "translate-x-1"
+                    status === 'active' ? "translate-x-6" : "translate-x-1"
                   }`}
                 />
               </div>
               <span className="ms-3 text-sm font-medium">
-                {isActive ? "Active" : "Inactive"}
+                {status === 'active' ? "Active" : "Inactive"}
               </span>
             </label>
             <div className="flex items-center gap-2">
@@ -227,18 +328,26 @@ const Captain = () => {
           {/* Rides */}
           {!newRide ? (
             <RecentRides />
-          ) : rideStart ? (
-            <CompleteRide
-              rideData = {newRide} 
-              rides = {rides}/>
-          ) : (
+          ) : showConfirmRide ? (
             <ConfirmRidePopup
-              setRides = {setRides}
-              setRideStart = {setRideStart}
+              setRides={setRides}
               ref={confirmRideRef}
               rideData={newRide}
               onAccept={handleAccept}
             />
+          ) : rideAccepted ? (
+            <WaitingForUser 
+              rideData={newRide}
+              setRideStart={setRideStart}
+              setRideAccepted={setRideAccepted}
+            />
+          ) : rideStart ? (
+            <CompleteRide
+              rideData={newRide} 
+              rides={rides}
+            />
+          ) : (
+            <RecentRides />
           )}
         </div>
       </div>

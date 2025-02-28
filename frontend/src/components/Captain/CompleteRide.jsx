@@ -7,7 +7,7 @@ const CompleteRide = forwardRef(({ onAccept, rides, rideData }, ref) => {
   const [showFullP, setShowFullP] = useState(false);
   const [showFullD, setShowFullD] = useState(false);
   const [otpValue, setOtpValue] = useState('');
-  const [receivedOtp, setReceivedOtp] = useState(''); // Add this state
+  const [receivedOtp, setReceivedOtp] = useState('');
   const dispatch = useDispatch();
   const captainData = useSelector((state) => state.captain);
   const rideState = useSelector(state => state.ride);
@@ -17,18 +17,22 @@ const CompleteRide = forwardRef(({ onAccept, rides, rideData }, ref) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    socket.on("receive-otp", (data) => {
-      if (data && data.otp) {
-        const otpNumber = data.otp.toString();
-        setReceivedOtp(otpNumber); // Store in state instead of local variable
-        console.log('Received OTP:', otpNumber);
-      }
-    });
-  
-    return () => {
-      socket.off("receive-otp");
+    const handleOtpReceived = (data) => {
+        console.log('Received OTP data:', data);
+        if (data && data.otp) {
+            const otpString = data.otp.toString();
+            setReceivedOtp(otpString);
+            console.log('Stored OTP:', otpString);
+        }
     };
-  }, [socket, dispatch]);
+
+    socket.off("receive-otp");
+    socket.on("receive-otp", handleOtpReceived);
+
+    return () => {
+        socket.off("receive-otp", handleOtpReceived);
+    };
+  }, [socket]);
 
   const handleOtpChange = (e) => {
     const value = e.target.value.replace(/[^0-9]/g, '');
@@ -44,27 +48,29 @@ const CompleteRide = forwardRef(({ onAccept, rides, rideData }, ref) => {
         return;
       }
 
-      console.log('otpValue:', otpValue);
-      console.log('receivedOtp:', receivedOtp);
+      console.log('Verifying OTP:', otpValue, 'against:', receivedOtp);
 
       if (otpValue === receivedOtp) {
-        // Emit ride completion event
         socket.emit('ride-completed', {
           rideId: rideData._id,
-          captainId: id,
+          captainId: captainData.id,
           otp: otpValue
         });
 
-        // Clear OTP input
-        setOtpValue('');
-        
-        // Navigate to success page
-        navigate('/ride-success', {
-          state: {
-            fare: rideData?.fare,
-            pickup: rideData?.pickup,
-            destination: rideData?.destination
-          }
+        socket.on('ride-completion-success', () => {
+          setOtpValue('');
+          navigate('/ride-success', {
+            state: {
+              fare: rideData?.fare,
+              pickup: rideData?.pickup,
+              destination: rideData?.destination
+            }
+          });
+        });
+
+        socket.on('error', (error) => {
+          console.error('Completion error:', error);
+          alert(error.message || 'Failed to complete ride');
         });
       } else {
         alert('Invalid OTP. Please check and try again.');
@@ -74,6 +80,13 @@ const CompleteRide = forwardRef(({ onAccept, rides, rideData }, ref) => {
       alert('Failed to complete ride. Please try again.');
     }
   };
+
+  useEffect(() => {
+    return () => {
+      socket.off('ride-completion-success');
+      socket.off('error');
+    };
+  }, [socket]);
 
   return (
     <div ref={ref} className='bg-gray-100 h-92 w-full p-5 rounded-xl animate-slide-up mt-5'>
