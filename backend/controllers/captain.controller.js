@@ -3,7 +3,20 @@ const captainService = require('../services/captain.service')
 const {validationResult} = require('express-validator')
 const blacklistToken = require('../models/blacklistToken.model')
 
-module.exports.registerCaptain = async (req, res) => {
+// Helper function
+const resetHoursOnlineAtMidnight = async () => {
+    try {
+        const result = await captainModel.updateMany(
+            {}, 
+            { $set: { hoursOnline: 0 } }
+        );
+        console.log(`Reset hoursOnline for ${result.modifiedCount} captains at midnight`);
+    } catch (error) {
+        console.error('Error resetting hoursOnline:', error);
+    }
+};
+
+const registerCaptain = async (req, res) => {
     try {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
@@ -64,7 +77,7 @@ module.exports.registerCaptain = async (req, res) => {
     }
 };
 
-module.exports.loginCaptain = async (req, res) => {
+const loginCaptain = async (req, res) => {
     try {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
@@ -111,19 +124,19 @@ module.exports.loginCaptain = async (req, res) => {
     }
 };
 
-module.exports.getCaptainProfile = async(req,res) =>{
+const getCaptainProfile = async(req,res) => {
     res.status(200).json({captain: req.captain})
-}
+};
 
-module.exports.logoutCaptain = async (req,res) =>{
+const logoutCaptain = async (req,res) => {
     const token = req.cookies.token || req.headers.authorization.split(' ')[1]
     await blacklistToken.create({token})
 
     res.clearCookie('token')
     res.status(200).json({message: 'Logged out'})
-}
+};
 
-module.exports.updateCaptainProfile = async (req, res) => {
+const updateCaptainProfile = async (req, res) => {
     const { firstname, lastname, email, vehicle, status, rating, hoursOnline } = req.body;
 
     try {   
@@ -166,5 +179,15 @@ module.exports.updateCaptainProfile = async (req, res) => {
         console.error("Error in updateCaptainProfile:", error); // Log the entire error object
         res.status(500).json({ message: "An internal server error occurred. Please try again later." });
     }
+};
+
+// Export all functions together
+module.exports = {
+    registerCaptain,
+    loginCaptain,
+    getCaptainProfile,
+    logoutCaptain,
+    updateCaptainProfile,
+    resetHoursOnlineAtMidnight
 };
 

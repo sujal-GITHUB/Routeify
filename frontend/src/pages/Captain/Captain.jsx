@@ -11,6 +11,7 @@ import { socketContext } from "../../context/socketContext";
 import CompleteRide from "../../components/Captain/CompleteRide";
 import WaitingForUser from "../../components/Captain/WaitingForUser";
 import { updateCurrentRide } from '../../actions/rideActions';
+import LiveTracking from "../LiveTracking";
 
 // Add this helper function at the top of your component
 const getMidnightTime = () => {
@@ -280,11 +281,7 @@ const Captain = () => {
     <div className="h-screen font-lexend relative">
       {/* Background */}
       <div className="absolute inset-0 -z-10">
-        <img
-          src="/image.png"
-          alt="Background"
-          className="w-full h-full object-cover"
-        />
+        <LiveTracking/>
       </div>
 
       {/* Logo */}

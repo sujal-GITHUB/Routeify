@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import ConfirmRide from '../../components/User/ConfirmRide';
 import logo from '../../assets/logo1.png';
 import gsap from "gsap";
+import LiveTracking from '../LiveTracking';
 
 const Riding = () => {
   const panelRef = useRef();
@@ -36,11 +37,7 @@ const Riding = () => {
     <div className="h-screen font-lexend relative overflow-hidden">
       {/* Background Image */}
       <div className="absolute inset-0 -z-10">
-        <img 
-          src="/image-copy.png" 
-          alt="Background" 
-          className="w-full h-full object-cover" 
-        />
+        <LiveTracking />
       </div>
 
       {/* Logo */}

@@ -1,30 +1,40 @@
-const express = require('express')
-const dotenv = require('dotenv')
-dotenv.config()
-const app = express()
-const cors = require('cors')
-const connectToDb = require('./db/db')
-const userRoutes = require('./routes/user.routes')
-const captainRoutes = require('./routes/captain.routes')
-const mapRoutes = require('./routes/map.routes')
-const rideRoutes = require('./routes/ride.routes')
-const paymentRoutes = require('./routes/payment.routes')
-const cookieParser = require('cookie-parser')
+const express = require('express');
+const dotenv = require('dotenv');
+const cors = require('cors');
+const connectToDb = require('./db/db');
+const cookieParser = require('cookie-parser');
 
+// Load environment variables first
+dotenv.config();
+
+const app = express();
+
+// Connect to MongoDB
 connectToDb()
-app.use(cors())
-app.use(express.json())
-app.use(express.urlencoded({extended: true}))
-app.use(cookieParser())
+  .then(() => {
+    console.log('✅ Database connection initialized');
+  })
+  .catch(err => {
+    console.error('❌ Database connection failed:', err.message);
+    process.exit(1);
+  });
 
-app.get("/",(req,res)=>{
-    res.send('Hello')
-})
+// Middleware
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
-app.use('/users',userRoutes)
-app.use('/captains',captainRoutes)
-app.use('/maps',mapRoutes)
-app.use('/rides',rideRoutes)
-app.use('/payments',paymentRoutes)
+// Routes
+app.use('/users', require('./routes/user.routes'));
+app.use('/captains', require('./routes/captain.routes'));
+app.use('/maps', require('./routes/map.routes'));
+app.use('/rides', require('./routes/ride.routes'));
+app.use('/payments', require('./routes/payment.routes'));
+
+// Basic route
+app.get("/", (req, res) => {
+    res.send('Routeify API is running');
+});
 
 module.exports = app;

@@ -17,6 +17,7 @@ import VehiclePanel from "../../components/User/VehiclePanel";
 import FindCaptains from "../../components/User/FindCaptains";
 import { socketContext } from "../../context/socketContext";
 import { fetchUserData } from '../../actions/userActions';
+import LiveTracking from "../LiveTracking";
 
 const Home = () => {
   const dispatch = useDispatch();
@@ -308,10 +309,30 @@ const Home = () => {
     }
   ];
 
+  // Add this new function to handle panel up state
+  const handlePanelUpState = () => {
+    setPanelOpen(true);
+    setActivePanel("pickup");
+    setShowRideOptions(false);
+    const tl = gsap.timeline();
+    
+    tl.to(vehiclePanelRef.current, {
+      opacity: 0,
+      height: 0,
+      duration: 0.3
+    })
+    .to(panelRef.current, {
+      display: "block",
+      height: "75%",
+      opacity: 1,
+      duration: 0.3
+    });
+  };
+
   return (
     <div className="h-screen font-lexend relative">
       <div className="absolute inset-0 -z-10">
-        <img src="/image.png" alt="Background" className="w-full h-full object-cover" />
+        <LiveTracking/>
       </div>
 
       <div className="p-5">
@@ -328,10 +349,10 @@ const Home = () => {
               </button>
                 <button 
                   ref={panelClose}
-                  onClick={resetToInitialState}
-                  className=" opacity-1"
+                  onClick={panelOpen ? resetToInitialState : handlePanelUpState}
+                  className="opacity-1"
                 >
-                  <i className="ri-arrow-down-s-line text-xl" />
+                  <i className={`ri-arrow-${panelOpen ? 'down' : 'up'}-s-line text-xl`} />
                 </button>
             </div>
           </div>
