@@ -58,11 +58,27 @@ const DestinationLocationPanel = ({ destination, setDestination }) => {
 
   return (
     <div className="p-3">
-      {loading && <p className="text-gray-600">Loading locations...</p>}
-      {error && <p className="text-red-600">{error}</p>}
-
-      {!loading &&
-        !error &&
+      {loading ? (
+        <div className="flex justify-center items-center p-4">
+          <svg className="animate-spin h-7 w-7 text-black" viewBox="0 0 24 24">
+            <circle 
+              className="opacity-25" 
+              cx="12" 
+              cy="12" 
+              r="10" 
+              stroke="currentColor" 
+              strokeWidth="4" 
+            />
+            <path 
+              className="opacity-75" 
+              fill="currentColor" 
+              d="M4 12a8 8 0 018-8v8H4z"
+            />
+          </svg>
+        </div>
+      ) : error ? (
+        <p className="text-red-600 text-center">{error}</p>
+      ) : (
         locations.map((item, index) => (
           <div
             key={index}
@@ -76,7 +92,8 @@ const DestinationLocationPanel = ({ destination, setDestination }) => {
               <h4 className="text-sm font-medium text-gray-700">{item}</h4>
             </div>
           </div>
-        ))}
+        ))
+      )}
     </div>
   );
 };

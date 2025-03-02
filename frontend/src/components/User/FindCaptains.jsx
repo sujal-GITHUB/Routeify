@@ -8,7 +8,7 @@ import auto from "../../assets/auto.png";
 import { socketContext } from '../../context/socketContext';
 import axios from 'axios';
 
-const FindCaptains = ({setShowFindCaptains}) => {
+const FindCaptains = ({setShowFindCaptains, handleCancelRide}) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { socket } = useContext(socketContext);
@@ -56,8 +56,6 @@ const FindCaptains = ({setShowFindCaptains}) => {
           if (response.data?._id) {
             const rideData = { ...response.data, rideId: response.data._id };
             dispatch(setRideData(rideData));
-
-            // Emit socket events after successful ride creation
             socket.emit('join', { 
               userId: user.id, 
               userType: 'user' 
@@ -128,17 +126,6 @@ const FindCaptains = ({setShowFindCaptains}) => {
     }
   }, [ride.status, navigate, isNavigating]);
 
-  const handleCancelRide = () => {
-    if (socket && ride._id) {
-      socket.emit('cancel-ride', { rideId: ride._id });
-    }
-    dispatch(setRideData({
-      vehicletype: '',
-    }));
-    rideCreatedRef.current = false;
-    setShowFindCaptains(false);
-  };
-
   return (
     <div className="w-full flex flex-col items-center bg-gray-100 p-5 rounded-xl animate-fade-in">
       <h1 className="text-xl font-bold text-black w-full text-center">
@@ -154,10 +141,10 @@ const FindCaptains = ({setShowFindCaptains}) => {
           />
         )}
 
-        <div className="pt-4 w-full border-t border-gray-300 text-gray-700 space-y-1 px-0">
+        <div className="pt-4 w-full border-t border-gray-300 text-black space-y-1 px-0">
           <p className="text-sm"><strong>Pickup:</strong> {ride.pickup}</p>
           <p className="text-sm"><strong>Destination:</strong> {ride.destination}</p>
-          <p className="text-sm"><strong>Price:</strong> ₹{ride.price}</p>
+          <p className="text-sm"><strong>Price:</strong> <span className='text-green-500'>₹{ride.price}</span></p>
         </div>
 
         <button 

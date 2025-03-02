@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { setRideData } from "../../actions/rideActions";
 import gsap from "gsap";
@@ -9,14 +9,35 @@ import payment_success from "../../assets/payment-success.png";
 import payment_error from "../../assets/payment-error.png";
 import { socketContext } from "../../context/socketContext";
 
+export const RatingStars = ({ rating }) => {
+  const ratingNum = parseFloat(rating);
+  const fullStars = Math.floor(ratingNum);
+  const hasHalfStar = ratingNum % 1 !== 0;
+  
+  return (
+    <div className='flex flex-col items-center'>
+        <div className="flex items-center">
+      {[...Array(fullStars)].map((_, index) => (
+        <i key={`full-${index}`} className="ri-star-fill text-yellow-500"></i>
+      ))}
+      {hasHalfStar && <i className="ri-star-half-fill text-yellow-500"></i>}
+      {[...Array(5 - Math.ceil(ratingNum))].map((_, index) => (
+        <i key={`empty-${index}`} className="ri-star-line text-yellow-500"></i>
+      ))}
+    </div>
+    <div className="ml-1 font-semibold text-2xl">{rating}</div>
+    </div>
+  );
+};
+
 const ConfirmRide = () => {
   const [isProcessing, setIsProcessing] = useState(false);
+  const main = useRef(null)
   const [paymentStatus, setPaymentStatus] = useState(null);
   const [showPaymentMethods, setShowPaymentMethods] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [eta, setEta] = useState(null);
   const dispatch = useDispatch();
-  const {socket} = useContext(socketContext);
+  const { socket } = useContext(socketContext);
   const navigate = useNavigate();
   const {
     user,
@@ -29,36 +50,6 @@ const ConfirmRide = () => {
     time,
     otp,
   } = useSelector((state) => state.ride);
-  
-  const calculateETA = async () => {
-    if (!captain?.location?.coordinates || !pickup) return;
-
-    try {
-      const [captainLong, captainLat] = captain.location.coordinates;
-
-      const response = await axios.get(
-        `${import.meta.env.VITE_BASE_URL}/maps/calculate-ETA`,
-        {
-          params: { 
-            captainLat,
-            captainLong,
-            pickup
-          },
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("usertoken")}`,
-          },
-        }
-      );
-      
-      // Get the ETA in minutes, rounded up to nearest minute
-      const minutesToArrival = Math.ceil(response.data.eta);
-      setEta(minutesToArrival);
-    } catch (error) {
-      console.error("Error calculating ETA:", error);
-      // Default fallback if calculation fails
-      setEta(5);
-    }
-  };
 
   useEffect(() => {
     if (!pickup) {
@@ -92,17 +83,6 @@ const ConfirmRide = () => {
     };
 
     fetchDistanceTime();
-    
-    // Initial ETA calculation
-    calculateETA();
-    
-    // Update ETA every 3 seconds
-    const etaInterval = setInterval(() => {
-      calculateETA();
-    }, 3000);
-    
-    // Clear interval on component unmount
-    return () => clearInterval(etaInterval);
   }, [pickup, destination, navigate, dispatch, captain]);
 
   const handleCancelRide = () => {
@@ -185,62 +165,62 @@ const ConfirmRide = () => {
 
   const handleButtonClick = (isLeftButton) => {
     if (showPaymentMethods) {
-        isLeftButton ? handlePayment("cash") : handlePayment("online");
+      isLeftButton ? handlePayment("cash") : handlePayment("online");
     } else {
-        if (isLeftButton) {
-            handleCancelRide();
-        } else {
-            // First send OTP to captain
-            if (captain?.socketId && otp) {
-                socket.emit("send-otp", {
-                    otp: otp.toString(),
-                    socketId: captain.socketId
-                });
-            }
-
-            // Then emit confirm-ride event
-            socket.emit('confirm-ride', {
-                rideId: _id,
-                userId: user
-            });
-
-            socket.on('ride-confirmation-success', () => {
-                setShowPaymentMethods(true);
-            });
-
-            socket.on('error', (error) => {
-                console.error('Error:', error);
-                alert('Failed to confirm ride. Please try again.');
-            });
+      if (isLeftButton) {
+        handleCancelRide();
+      } else {
+        // First send OTP to captain
+        if (captain?.socketId && otp) {
+          socket.emit("send-otp", {
+            otp: otp.toString(),
+            socketId: captain.socketId,
+          });
         }
-    }
-};
 
-// Update the cleanup useEffect
-useEffect(() => {
-    return () => {
-        socket.off('otp-sent-confirmation');
-        socket.off('ride-confirmation-success');
-        socket.off('error');
-    };
-}, [socket]);
-
-useEffect(() => {
-    socket.on('ride-completed', (data) => {
-        // Navigate to success page with ride data
-        navigate('/success', {
-            state: {
-                pickup: data.pickup,
-                destination: data.destination,
-                fare: data.fare
-            }
+        // Then emit confirm-ride event
+        socket.emit("confirm-ride", {
+          rideId: _id,
+          userId: user,
         });
+
+        socket.on("ride-confirmation-success", () => {
+          setShowPaymentMethods(true);
+        });
+
+        socket.on("error", (error) => {
+          console.error("Error:", error);
+          alert("Failed to confirm ride. Please try again.");
+        });
+      }
+    }
+  };
+
+  // Update the cleanup useEffect
+  useEffect(() => {
+    return () => {
+      socket.off("otp-sent-confirmation");
+      socket.off("ride-confirmation-success");
+      socket.off("error");
+    };
+  }, [socket]);
+
+  useEffect(() => {
+    socket.on("ride-completed", (data) => {
+      // Navigate to success page with ride data
+      navigate("/success", {
+        state: {
+          pickup: data.pickup,
+          destination: data.destination,
+          fare: data.fare,
+        },
+      });
     });
 
     return () => {
-        socket.off('ride-completed');
+      socket.off("ride-completed");
     };
-}, [socket, navigate]);
+  }, [socket, navigate]);
 
   if (loading) {
     return (
@@ -270,25 +250,16 @@ useEffect(() => {
   }
 
   return (
-    <div className="w-full h-full flex flex-col items-center bg-gray-100 p-5 rounded-xl animate-fade-in">
-      <div className="ride-details w-full">
-        <div className="w-full flex justify-between items-center mb-4">
-          <h1 className="text-xl font-bold text-black">Reaching to you in</h1>
-          <div className="bg-black text-white rounded-full px-4 py-1 text-base">
-            {eta ?? "..."} mins
-          </div>
-        </div>
-
-        <div className="h-[2px] w-full bg-gray-300 mb-4"></div>
-
+    <>
+      <div className='bg-gray-100 p-4 rounded-xl'>
         <div className="w-full flex justify-between mb-4">
-          <div className="flex items-center space-x-4">
+          <div className="w-full flex items-center space-x-4">
             <img
               className="h-16 w-16 rounded-full object-cover border-2 border-gray-200"
               src="https://static.vecteezy.com/system/resources/previews/036/594/092/non_2x/man-empty-avatar-photo-placeholder-for-social-networks-resumes-forums-and-dating-sites-male-and-female-no-photo-images-for-unfilled-user-profile-free-vector.jpg"
               alt="Driver Avatar"
             />
-            <div className="text-black">
+            <div className="flex-1 text-black">
               <h5 className="text-base font-medium">
                 {captain?.fullname ? 
                   `${
@@ -302,32 +273,32 @@ useEffect(() => {
 
               <h2 className="text-lg font-bold">{captain?.vehicle?.plate || "XYZ 1234"}</h2>
               <h3 className="text-base">{captain?.vehicle?.vehicleType || "Car"}</h3>
-              <h4 className="flex items-center text-base text-yellow-500">
-                <i className="ri-star-fill mr-1"></i>{captain?.rating || "4.5"}
-              </h4>
             </div>
-          </div>
-          
-          {otp && (
-            <div className="flex flex-col items-center justify-center bg-gray-50 px-4 py-1 rounded-lg border border-gray-300">
-              <span className="text-xs text-black font-semibold mb-1">OTP</span>
-              <span className="text-2xl font-bold text-black">{otp}</span>
+            <div className="flex-1 flex justify-end">
+              <RatingStars rating={captain?.rating || "4.5"} />
+            </div>
+          </div>    
+        </div>
+
+        {otp && (
+            <div className="flex flex-col items-center justify-center bg-gray-50 px-4 py-2 rounded-lg border border-gray-300">
+              <span className="text-base text-black font-semibold mb-1">OTP</span>
+              <span className="text-3xl font-bold text-black">{otp}</span>
             </div>
           )}
-        </div>
 
         <div className="w-full flex justify-around text-xl text-white mt-6 mb-4">
           <div className="flex flex-col items-center">
-            <i className="ri-shield-fill bg-blue-500 p-3 rounded-full w-12 h-12 flex items-center justify-center"></i>
-            <p className="text-xs text-gray-600 mt-1">Safety</p>
+            <i className="ri-shield-fill bg-gray-800 p-3 rounded-full w-12 h-12 flex items-center justify-center"></i>
+            <p className="text-xs text-black mt-1">Safety</p>
           </div>
           <div className="flex flex-col items-center">
-            <i className="ri-user-shared-fill bg-blue-500 p-3 rounded-full w-12 h-12 flex items-center justify-center"></i>
-            <p className="text-xs text-gray-600 mt-1">Share</p>
+            <i className="ri-user-shared-fill bg-gray-800 p-3 rounded-full w-12 h-12 flex items-center justify-center"></i>
+            <p className="text-xs text-black mt-1">Share</p>
           </div>
           <div className="flex flex-col items-center">
-            <i className="ri-phone-fill bg-blue-500 p-3 rounded-full w-12 h-12 flex items-center justify-center"></i>
-            <p className="text-xs text-gray-600 mt-1">Contact</p>
+            <i className="ri-phone-fill bg-gray-800 p-3 rounded-full w-12 h-12 flex items-center justify-center"></i>
+            <p className="text-xs text-black mt-1">Contact</p>
           </div>
         </div>
 
@@ -418,8 +389,8 @@ useEffect(() => {
             </p>
           </div>
         )}
-      </div>
     </div>
+    </>
   );
 };
 
