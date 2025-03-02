@@ -17,7 +17,7 @@ import VehiclePanel from "../../components/User/VehiclePanel";
 import FindCaptains from "../../components/User/FindCaptains";
 import { socketContext } from "../../context/socketContext";
 import { fetchUserData } from "../../actions/userActions";
-import LiveTracking from "../LiveTracking";
+import Map from "../Map";
 
 const Home = () => {
   const dispatch = useDispatch();
@@ -488,7 +488,7 @@ const Home = () => {
     // Update the root div className to prevent scrolling
     <div className="h-screen font-lexend relative overflow-hidden">
       <div className="absolute inset-0 -z-10">
-        <LiveTracking />
+        <Map />
       </div>
 
       <div className="p-5">

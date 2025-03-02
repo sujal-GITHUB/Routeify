@@ -15,7 +15,7 @@ export const RatingStars = ({ rating }) => {
   const hasHalfStar = ratingNum % 1 !== 0;
   
   return (
-    <div className='flex flex-col items-center'>
+    <div className='flex flex-col items-end '>
         <div className="flex items-center">
       {[...Array(fullStars)].map((_, index) => (
         <i key={`full-${index}`} className="ri-star-fill text-yellow-500"></i>
@@ -25,14 +25,13 @@ export const RatingStars = ({ rating }) => {
         <i key={`empty-${index}`} className="ri-star-line text-yellow-500"></i>
       ))}
     </div>
-    <div className="ml-1 font-semibold text-2xl">{rating}</div>
+    <div className="ml-1 font-semibold text-3xl">{rating}</div>
     </div>
   );
 };
 
 const ConfirmRide = () => {
   const [isProcessing, setIsProcessing] = useState(false);
-  const main = useRef(null)
   const [paymentStatus, setPaymentStatus] = useState(null);
   const [showPaymentMethods, setShowPaymentMethods] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -253,12 +252,14 @@ const ConfirmRide = () => {
     <>
       <div className='bg-gray-100 p-4 rounded-xl'>
         <div className="w-full flex justify-between mb-4">
-          <div className="w-full flex items-center space-x-4">
+          <div className="w-full flex items-start space-x-4">
+            <div className="flex justify-center h-full items-center">
             <img
               className="h-16 w-16 rounded-full object-cover border-2 border-gray-200"
               src="https://static.vecteezy.com/system/resources/previews/036/594/092/non_2x/man-empty-avatar-photo-placeholder-for-social-networks-resumes-forums-and-dating-sites-male-and-female-no-photo-images-for-unfilled-user-profile-free-vector.jpg"
               alt="Driver Avatar"
             />
+            </div>
             <div className="flex-1 text-black">
               <h5 className="text-base font-medium">
                 {captain?.fullname ? 
@@ -289,15 +290,15 @@ const ConfirmRide = () => {
 
         <div className="w-full flex justify-around text-xl text-white mt-6 mb-4">
           <div className="flex flex-col items-center">
-            <i className="ri-shield-fill bg-gray-800 p-3 rounded-full w-12 h-12 flex items-center justify-center"></i>
+            <i className="ri-shield-fill bg-black p-3 rounded-full w-12 h-12 flex items-center justify-center"></i>
             <p className="text-xs text-black mt-1">Safety</p>
           </div>
           <div className="flex flex-col items-center">
-            <i className="ri-user-shared-fill bg-gray-800 p-3 rounded-full w-12 h-12 flex items-center justify-center"></i>
+            <i className="ri-user-shared-fill bg-black p-3 rounded-full w-12 h-12 flex items-center justify-center"></i>
             <p className="text-xs text-black mt-1">Share</p>
           </div>
           <div className="flex flex-col items-center">
-            <i className="ri-phone-fill bg-gray-800 p-3 rounded-full w-12 h-12 flex items-center justify-center"></i>
+            <i className="ri-phone-fill bg-black p-3 rounded-full w-12 h-12 flex items-center justify-center"></i>
             <p className="text-xs text-black mt-1">Contact</p>
           </div>
         </div>
@@ -306,7 +307,7 @@ const ConfirmRide = () => {
 
         {!paymentStatus && (
           <div>
-            <div className="w-full text-gray-700 space-y-1">
+            <div className="w-full text-black space-y-1">
               <p className="text-sm">
                 <strong>From:</strong> {truncateText(pickup)}
               </p>
@@ -325,10 +326,10 @@ const ConfirmRide = () => {
               </p>
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex gap-3">
               <button
                 onClick={() => handleButtonClick(true)}
-                className={`mt-5 bg-red-500 hover:bg-red-600 text-white w-1/2 py-3 px-4 rounded-md transition ${
+                className={`mt-5 bg-red-500 hover:bg-red-600 text-white w-1/2 py-3 px-4 rounded-lg transition ${
                   isProcessing ? "opacity-50 cursor-not-allowed" : ""
                 }`}
                 disabled={isProcessing}
@@ -337,7 +338,7 @@ const ConfirmRide = () => {
               </button>
               <button
                 onClick={() => handleButtonClick(false)}
-                className={`mt-5 bg-green-500 hover:bg-green-600 text-white w-1/2 py-3 px-4 rounded-md transition flex items-center justify-center ${
+                className={`mt-5 bg-green-500 hover:bg-green-600 text-white w-1/2 py-3 px-4 rounded-lg transition flex items-center justify-center ${
                   isProcessing ? "opacity-50 cursor-not-allowed" : ""
                 }`}
                 disabled={isProcessing}
