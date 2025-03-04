@@ -96,7 +96,6 @@ const Captain = () => {
           ...data,
           status: 'confirmed'
       }));
-      // Update local state
       setRideStart(true);
       setRideAccepted(false);
       setShowConfirmRide(false);

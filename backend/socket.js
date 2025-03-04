@@ -17,18 +17,15 @@ const initializeSocket = (server) => {
     });
 
     io.on("connection", (socket) => {
-        console.log('New socket connection:', socket.id);
-
         socket.on("join", async (data) => {
             try {
                 const { userId, userType } = data;
 
                 if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
-                    console.error(`Invalid userId: ${userId}`);
                     return socket.emit("error", { message: "Invalid userId" });
                 }
 
-                console.log(`${userType} Joined : ${userId}`);
+                console.log(`✅ ${userType} Joined : ${userId}`);
 
                 if (userType === "user") {
                     const updatedUser = await userModel.findByIdAndUpdate(
@@ -39,7 +36,6 @@ const initializeSocket = (server) => {
                     if (!updatedUser) {
                         return socket.emit("error", { message: "User not found" });
                     }
-                    console.log(`User ${userId} socket updated to ${socket.id}`);
                 } else if (userType === "captain") {
                     const updatedCaptain = await captainModel.findByIdAndUpdate(
                         userId,
@@ -49,7 +45,6 @@ const initializeSocket = (server) => {
                     if (!updatedCaptain) {
                         return socket.emit("error", { message: "Captain not found" });
                     }
-                    console.log(`Captain ${userId} socket updated to ${socket.id}`);
                 } else {
                     console.error(`Invalid userType: ${userType}`);
                     return socket.emit("error", { message: "Invalid userType" });
@@ -106,9 +101,6 @@ const initializeSocket = (server) => {
             try {
                 const { pickup, destination, vehicleType, userId, rideId } = rideData;
 
-                console.log('Ride request:', rideData);
-                
-                
                 if (!pickup || !destination || !vehicleType || !userId || !rideId) {
                     return socket.emit("error", { message: "Missing required ride data" });
                 }
@@ -143,9 +135,6 @@ const initializeSocket = (server) => {
             if (!userId || !captainId || !rideId) {
                 return socket.emit("error", { message: "Missing userId or captainId" });
             }
-
-            console.log(`Accepting ride for user ${userId} by captain ${captainId} with ID ${rideId}`);
-
             const captain = await captainModel.findById(captainId);
             if (!captain || captain.status !== 'active') {
                 return socket.emit("error", { message: "Captain is not available" });
@@ -177,8 +166,6 @@ const initializeSocket = (server) => {
             })
             .select('+otp');
 
-            console.log('Ride found:', ride);
-
             if (!ride) {
                 console.error('No pending ride found for user:', userId);
                 return socket.emit("error", { message: "No pending ride found" });
@@ -201,7 +188,6 @@ const initializeSocket = (server) => {
                 }
             });
 
-            // Send confirmation to captain
             socket.emit('ride-confirm', {
                 rideId: ride._id,
                 pickup: ride.pickup,
@@ -209,14 +195,12 @@ const initializeSocket = (server) => {
                 fare: ride.fare
             });
 
-            // Get all active captains except the one who accepted
             const otherCaptains = await captainModel.find({
                 _id: { $ne: captainId },
                 status: 'active',
                 socketId: { $exists: true, $ne: null }
             });
 
-            // Notify other captains
             otherCaptains.forEach(captain => {
                 sendMessageToSocketId(captain.socketId, {
                 event: 'ride-no-longer-available',
@@ -271,9 +255,6 @@ const initializeSocket = (server) => {
                     return socket.emit("error", { message: "Missing rideId or userId" });
                 }
 
-                console.log('Confirming ride:', rideId, userId);
-                
-
                 const ride = await rideModel.findOneAndUpdate(
                     { 
                         _id: rideId, 
@@ -295,9 +276,6 @@ const initializeSocket = (server) => {
                     select: 'socketId fullname vehicle rating location'
                 })
                 .select('+otp');
-
-                console.log('Found ride with populated captain:', JSON.stringify(ride, null, 2));
-
                 if (!ride) {
                     console.error('No acceptable ride found:', rideId);
                     return socket.emit("error", { message: "Ride not found or cannot be confirmed" });
@@ -425,7 +403,6 @@ function sendMessageToSocketId(socketId, messageObject) {
             return false;
         }
         io.to(socketId).emit(messageObject.event, messageObject.data);
-        console.log(`Event ${messageObject.event} sent to ${socketId}`);
         return true;
     } catch (error) {
         console.error("❌ Error sending message via socket:", error);
@@ -436,7 +413,6 @@ function sendMessageToSocketId(socketId, messageObject) {
 function sendMessageToAllCaptains(rideId, event) {
     try {
         io.emit(event, { rideId });
-        console.log(`Broadcast ${event} for ride ${rideId}`);
     } catch (error) {
         console.error(`❌ Error broadcasting ${event}:`, error);
     }

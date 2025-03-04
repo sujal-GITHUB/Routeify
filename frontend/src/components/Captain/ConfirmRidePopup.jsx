@@ -27,7 +27,6 @@ const ConfirmRidePopup = forwardRef(({ setRides, onAccept,setNewRide, rideData, 
         onComplete: () => {
           setRideStart(false);
           setNewRide(null);
-          setRides([]);
           
           gsap.to(ref.current, {
             opacity: 1,
