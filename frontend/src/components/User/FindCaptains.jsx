@@ -90,8 +90,6 @@ const FindCaptains = ({setShowFindCaptains, handleCancelRide}) => {
     const handleRideAccepted = (data) => {
       if (!isNavigating) {
         setIsNavigating(true);
-    
-        // Update the ride data with the received captain and other ride details
         const updatedRideData = {
           ...ride,
           status: 'accepted',

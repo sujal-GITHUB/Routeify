@@ -37,7 +37,7 @@ const Home = () => {
 
   // Update selectors to handle undefined state
   const rideData = useSelector((state) => state.ride) || {};
-  const { pickup = "", destination = "", price = "" } = rideData;
+  const { pickup = "", destination = "", price = "", rideId } = rideData;
 
   const user = useSelector((state) => state.user);
   const { socket } = useContext(socketContext);
@@ -280,8 +280,10 @@ const Home = () => {
         setPanelOpen(false);
         setActivePanel(null);
         setUp(false);
-        
-        // Clear ride data
+
+        socket.emit("cancel-ride", { userId: user.id, rideId: rideId });
+        console.log("Ride cancelled:", rideId, user.id);
+  
         dispatch(setRideData({ 
           pickup: "", 
           destination: "", 

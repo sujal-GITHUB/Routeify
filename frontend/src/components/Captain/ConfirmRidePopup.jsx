@@ -2,7 +2,7 @@ import React, { useState, forwardRef, useEffect, useContext } from 'react';
 import { socketContext } from '../../context/socketContext';
 import { useSelector } from 'react-redux';
 
-const ConfirmRidePopup = forwardRef(({ setRides, onAccept, rideData }, ref) => {
+const ConfirmRidePopup = forwardRef(({ setRides, onAccept, rideData, setRideStart }, ref) => {
   const [showFullP, setShowFullP] = useState(false);
   const [showFullD, setShowFullD] = useState(false);
   
@@ -17,7 +17,8 @@ const ConfirmRidePopup = forwardRef(({ setRides, onAccept, rideData }, ref) => {
     });
 
     socket.on("ride-no-longer-available", () => {
-      alert("Ride is no longer available!");
+      setRideStart(false);
+      setRides([]);
     });
 
     return () => {
@@ -26,16 +27,16 @@ const ConfirmRidePopup = forwardRef(({ setRides, onAccept, rideData }, ref) => {
     };
   }, [socket]); 
 
-  // ✅ Accept Ride Function (Fixed missing rideId parameter)
   const acceptRide = () => {
     if (!rideData || !rideData.user) {
       return alert("Invalid ride data!");
     }
     socket.emit("accept-ride", { 
       userId: rideData.user, 
-      captainId: id 
+      captainId: id ,
+      rideId: rideData._id,
     });
-    onAccept(); // This triggers handleAccept in Captain.jsx
+    onAccept();
   };
 
   return (

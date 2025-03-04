@@ -1,5 +1,6 @@
 import React, { useState, forwardRef, useEffect, useContext } from 'react';
 import { socketContext } from '../../context/socketContext';
+import { clearRide } from '../../actions/rideActions';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
@@ -12,7 +13,7 @@ const CompleteRide = forwardRef(({ onAccept, rides, rideData }, ref) => {
   const rideState = useSelector(state => state.ride);
   const {otp} = rideState;
   const { firstname, lastname, earning, rating, status, id } = captainData;
-
+  
   const {socket} = useContext(socketContext);
   const navigate = useNavigate();
   const otpComp = otp.toString();
@@ -26,43 +27,43 @@ const CompleteRide = forwardRef(({ onAccept, rides, rideData }, ref) => {
 
   const verifyOtpAndComplete = async () => {
     try {
-      if (!otpValue) {
-        alert('Please enter OTP');
-        return;
-      }
+        if (!otpValue) {
+            alert('Please enter OTP');
+            return;
+        }
 
-      console.log('Verifying OTP:', otpValue, 'against:', otpComp);
+        if (otpValue === otpComp) {
+            socket.emit('ride-completed', {
+                rideId: rideData._id,
+                captainId: captainData.id,
+                otp: otpValue
+            });
 
-      if (otpValue === otpComp) {
-        socket.emit('ride-completed', {
-          rideId: rideData._id,
-          captainId: captainData.id,
-          otp: otpValue
-        });
+            socket.on('ride-completion-success', async () => {
+                dispatch(clearRide());
 
-        socket.on('ride-completion-success', () => {
-          setOtpValue('');
-          navigate('/ride-success', {
-            state: {
-              fare: rideData?.fare,
-              pickup: rideData?.pickup,
-              destination: rideData?.destination
-            }
-          });
-        });
+                navigate('/ride-success', {
+                    state: {
+                        fare: rideData?.fare,
+                        pickup: rideData?.pickup,
+                        destination: rideData?.destination
+                    }
+                });
+            });
 
-        socket.on('error', (error) => {
-          console.error('Completion error:', error);
-          alert(error.message || 'Failed to complete ride');
-        });
-      } else {
-        alert('Invalid OTP. Please check and try again.');
-      }
+            socket.on('error', (error) => {
+                console.error('Completion error:', error);
+                alert(error.message || 'Failed to complete ride');
+            });
+        } else {
+            alert('Invalid OTP. Please check and try again.');
+        }
     } catch (error) {
-      console.error('Error completing ride:', error);
-      alert('Failed to complete ride. Please try again.');
+        console.error('Error completing ride:', error);
+        alert('Failed to complete ride. Please try again.');
     }
-  };
+};
+
 
   useEffect(() => {
     return () => {

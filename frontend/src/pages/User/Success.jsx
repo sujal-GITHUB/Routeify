@@ -1,25 +1,31 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { clearRide } from '../../actions/rideActions';
 import gsap from 'gsap';
 import confetti from 'canvas-confetti';
 
-const Success = () => {
+const Success = (clearRideData) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [rideDetails, setRideDetails] = useState(null);
 
   useEffect(() => {
-    // Get ride data from location state
-    const rideData = location.state;
+    const locationData = location.state;
+    const reduxData = {
+      pickup: rideState.pickup,
+      destination: rideState.destination,
+      fare: rideState.fare
+    };
+    const rideData = locationData || reduxData;
 
-    if (!rideData?.pickup || !rideData?.destination) {
-      navigate('/home');
+    if (!rideData.pickup || !rideData.destination) {
+      console.log('No ride data found, redirecting to captain page');
+      navigate('/captain');
       return;
     }
 
     setRideDetails(rideData);
 
-    // Trigger confetti
     confetti({
       particleCount: 100,
       spread: 70,
@@ -35,11 +41,15 @@ const Success = () => {
     return () => {
       gsap.killTweensOf('.success-content');
     };
-  }, [location.state, navigate]);
+  }, [location.state, rideState, navigate]);
 
   if (!rideDetails) {
     return null;
   }
+
+  const handleSuccess = () => {
+    navigate('/home');
+    };
 
   const { pickup, destination, fare } = rideDetails;
 
@@ -84,7 +94,7 @@ const Success = () => {
       </div>
 
       <button 
-        onClick={() => navigate('/home')}
+        onClick={() => handleSuccess()}
         className="success-content w-full max-w-md bg-black text-white py-3 rounded-xl hover:bg-gray-800 transition-colors"
       >
         Back to Home

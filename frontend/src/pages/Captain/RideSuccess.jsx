@@ -8,23 +8,17 @@ const RideSuccess = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [rideDetails, setRideDetails] = useState(null);
-  
-  // Get data from both location state and Redux
   const rideState = useSelector(state => state.ride);
   
   useEffect(() => {
-    // Try to get data from location state first, then fallback to Redux
     const locationData = location.state;
     const reduxData = {
       pickup: rideState.pickup,
       destination: rideState.destination,
       fare: rideState.fare
     };
-
-    // Use location state if available, otherwise use Redux state
     const rideData = locationData || reduxData;
 
-    // Validate if we have the required data
     if (!rideData.pickup || !rideData.destination) {
       console.log('No ride data found, redirecting to captain page');
       navigate('/captain');
@@ -33,7 +27,6 @@ const RideSuccess = () => {
 
     setRideDetails(rideData);
 
-    // Trigger confetti
     confetti({
       particleCount: 100,
       spread: 70,
@@ -54,6 +47,10 @@ const RideSuccess = () => {
   if (!rideDetails) {
     return null;
   }
+
+  const handleSuccess = () => {
+    navigate('/captain');
+    };
 
   const { pickup, destination, fare } = rideDetails;
 
@@ -98,7 +95,7 @@ const RideSuccess = () => {
       </div>
 
       <button 
-        onClick={() => navigate('/captain')}
+        onClick={() => handleSuccess()}
         className="success-content w-full max-w-md bg-black text-white py-3 rounded-xl hover:bg-gray-800 transition-colors"
       >
         Back to Home

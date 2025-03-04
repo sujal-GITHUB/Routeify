@@ -65,18 +65,15 @@ const Riding = () => {
     }
   }, [captain?.location?.coordinates]);
 
-
-  // Update toggle panel function
   const togglePanel = () => {
     const panel = panelRef.current;
 
     if (!isPanelDown) {
-      // Panel going down - hide content
       const height = panel.offsetHeight;
       gsap.set(panel, { height: height });
       
       gsap.timeline({
-        defaults: { duration: 0.5, ease: "power3.inOut" }
+        defaults: { duration: 0., ease: "power3.inOut" }
       })
       .to(panel, {
         height: 0,

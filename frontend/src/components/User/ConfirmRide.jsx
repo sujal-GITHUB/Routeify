@@ -4,6 +4,7 @@ import { setRideData } from "../../actions/rideActions";
 import gsap from "gsap";
 import { useContext } from "react";
 import { useNavigate } from "react-router-dom";
+import { clearRide } from "../../actions/rideActions";
 import axios from "axios";
 import payment_success from "../../assets/payment-success.png";
 import payment_error from "../../assets/payment-error.png";
@@ -13,19 +14,22 @@ export const RatingStars = ({ rating }) => {
   const ratingNum = parseFloat(rating);
   const fullStars = Math.floor(ratingNum);
   const hasHalfStar = ratingNum % 1 !== 0;
-  
+
   return (
-    <div className='flex flex-col items-end '>
-        <div className="flex items-center">
-      {[...Array(fullStars)].map((_, index) => (
-        <i key={`full-${index}`} className="ri-star-fill text-yellow-500"></i>
-      ))}
-      {hasHalfStar && <i className="ri-star-half-fill text-yellow-500"></i>}
-      {[...Array(5 - Math.ceil(ratingNum))].map((_, index) => (
-        <i key={`empty-${index}`} className="ri-star-line text-yellow-500"></i>
-      ))}
-    </div>
-    <div className="ml-1 font-semibold text-3xl">{rating}</div>
+    <div className="flex flex-col items-end ">
+      <div className="flex items-center">
+        {[...Array(fullStars)].map((_, index) => (
+          <i key={`full-${index}`} className="ri-star-fill text-yellow-500"></i>
+        ))}
+        {hasHalfStar && <i className="ri-star-half-fill text-yellow-500"></i>}
+        {[...Array(5 - Math.ceil(ratingNum))].map((_, index) => (
+          <i
+            key={`empty-${index}`}
+            className="ri-star-line text-yellow-500"
+          ></i>
+        ))}
+      </div>
+      <div className="ml-1 font-semibold text-3xl">{rating}</div>
     </div>
   );
 };
@@ -85,21 +89,39 @@ const ConfirmRide = () => {
   }, [pickup, destination, navigate, dispatch, captain]);
 
   const handleCancelRide = () => {
-    gsap.to(".ride-details", {
-      opacity: 0,
-      height: 0,
-      duration: 0.3,
-      onComplete: () => {
-        dispatch(
-          setRideData({
-            pickup: "",
-            destination: "",
-            price: "",
-            vehicletype: "",
-          })
-        );
-        navigate("/home");
-      },
+    setIsProcessing(true);
+    
+    // Emit cancel-ride event
+    socket.emit("cancel-ride", {
+      rideId: _id,
+      userId: user
+    });
+
+    // Listen for response
+    socket.once("ride-cancelled", () => {
+      setIsProcessing(false);
+      gsap.to(".ride-details", {
+        opacity: 0,
+        height: 0,
+        duration: 0.3,
+        onComplete: () => {
+          dispatch(
+            setRideData({
+              pickup: "",
+              destination: "",
+              price: "",
+              vehicletype: "",
+            })
+          );
+          navigate("/home");
+        },
+      });
+    });
+
+    socket.once("error", (error) => {
+      console.error("Cancel ride error:", error);
+      setIsProcessing(false);
+      alert(error.message || "Failed to cancel ride");
     });
   };
 
@@ -162,51 +184,58 @@ const ConfirmRide = () => {
     }
   };
 
-  const handleButtonClick = (isLeftButton) => {
-    if (showPaymentMethods) {
-      isLeftButton ? handlePayment("cash") : handlePayment("online");
-    } else {
-      if (isLeftButton) {
-        handleCancelRide();
-      } else {
-        // First send OTP to captain
-        if (captain?.socketId && otp) {
-          socket.emit("send-otp", {
-            otp: otp.toString(),
-            socketId: captain.socketId,
-          });
-        }
+  const handleButtonClick = () => {
+    setIsProcessing(true);
+    socket.emit("confirm-ride", {
+      rideId: _id,
+      userId: user,
+    });
 
-        // Then emit confirm-ride event
-        socket.emit("confirm-ride", {
-          rideId: _id,
-          userId: user,
-        });
-
-        socket.on("ride-confirmation-success", () => {
-          setShowPaymentMethods(true);
-        });
-
-        socket.on("error", (error) => {
-          console.error("Error:", error);
-          alert("Failed to confirm ride. Please try again.");
+    socket.once("ride-confirmation-success", () => {
+      if (captain?.socketId && otp) {
+        socket.emit("send-otp", {
+          otp: otp.toString(),
+          socketId: captain.socketId,
         });
       }
-    }
+      setIsProcessing(false);
+      setShowPaymentMethods(true);
+    });
+
+    socket.once("error", (error) => {
+      console.error("Error:", error);
+      setIsProcessing(false);
+      alert("Failed to confirm ride. Please try again.");
+    });
   };
 
-  // Update the cleanup useEffect
+  // Add socket event listeners in useEffect
   useEffect(() => {
+    // Listen for ride confirmation events
+    const handleRideConfirmation = () => {
+      setIsProcessing(false);
+      setShowPaymentMethods(true);
+    };
+
+    const handleError = (error) => {
+      console.error("Socket error:", error);
+      setIsProcessing(false);
+      alert(error.message || "Failed to confirm ride. Please try again.");
+    };
+
+    socket.on("ride-confirmation-success", handleRideConfirmation);
+    socket.on("error", handleError);
+
+    // Cleanup listeners
     return () => {
-      socket.off("otp-sent-confirmation");
-      socket.off("ride-confirmation-success");
-      socket.off("error");
+      socket.off("ride-confirmation-success", handleRideConfirmation);
+      socket.off("error", handleError);
     };
   }, [socket]);
 
   useEffect(() => {
     socket.on("ride-completed", (data) => {
-      // Navigate to success page with ride data
+      dispatch(clearRide());
       navigate("/success", {
         state: {
           pickup: data.pickup,
@@ -221,72 +250,50 @@ const ConfirmRide = () => {
     };
   }, [socket, navigate]);
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <svg
-          className="animate-spin h-10 w-10 text-black"
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-        >
-          <circle
-            className="opacity-25"
-            cx="12"
-            cy="12"
-            r="10"
-            stroke="currentColor"
-            strokeWidth="4"
-          ></circle>
-          <path
-            className="opacity-75"
-            fill="currentColor"
-            d="M4 12a8 8 0 018-8v8H4z"
-          ></path>
-        </svg>
-      </div>
-    );
-  }
-
   return (
     <>
-      <div className='bg-gray-100 p-4 rounded-xl'>
+      <div className="bg-gray-100 p-4 rounded-xl">
         <div className="w-full flex justify-between mb-4">
           <div className="w-full flex items-start space-x-4">
             <div className="flex justify-center h-full items-center">
-            <img
-              className="h-16 w-16 rounded-full object-cover border-2 border-gray-200"
-              src="https://static.vecteezy.com/system/resources/previews/036/594/092/non_2x/man-empty-avatar-photo-placeholder-for-social-networks-resumes-forums-and-dating-sites-male-and-female-no-photo-images-for-unfilled-user-profile-free-vector.jpg"
-              alt="Driver Avatar"
-            />
+              <img
+                className="h-16 w-16 rounded-full object-cover border-2 border-gray-200"
+                src="https://static.vecteezy.com/system/resources/previews/036/594/092/non_2x/man-empty-avatar-photo-placeholder-for-social-networks-resumes-forums-and-dating-sites-male-and-female-no-photo-images-for-unfilled-user-profile-free-vector.jpg"
+                alt="Driver Avatar"
+              />
             </div>
             <div className="flex-1 text-black">
               <h5 className="text-base font-medium">
-                {captain?.fullname ? 
-                  `${
-                    captain.fullname.firstname.charAt(0).toUpperCase() +
-                    captain.fullname.firstname.slice(1)
-                  } ${
-                    captain.fullname.lastname.charAt(0).toUpperCase() +
-                    captain.fullname.lastname.slice(1)
-                  }` : 'Driver'}
+                {captain?.fullname
+                  ? `${
+                      captain.fullname.firstname.charAt(0).toUpperCase() +
+                      captain.fullname.firstname.slice(1)
+                    } ${
+                      captain.fullname.lastname.charAt(0).toUpperCase() +
+                      captain.fullname.lastname.slice(1)
+                    }`
+                  : "Driver"}
               </h5>
 
-              <h2 className="text-lg font-bold">{captain?.vehicle?.plate || "XYZ 1234"}</h2>
-              <h3 className="text-base">{captain?.vehicle?.vehicleType || "Car"}</h3>
+              <h2 className="text-lg font-bold">
+                {captain?.vehicle?.plate || "XYZ 1234"}
+              </h2>
+              <h3 className="text-base">
+                {captain?.vehicle?.vehicleType || "Car"}
+              </h3>
             </div>
             <div className="flex-1 flex justify-end">
               <RatingStars rating={captain?.rating || "4.5"} />
             </div>
-          </div>    
+          </div>
         </div>
 
         {otp && (
-            <div className="flex flex-col items-center justify-center bg-gray-50 px-4 py-2 rounded-lg border border-gray-300">
-              <span className="text-base text-black font-semibold mb-1">OTP</span>
-              <span className="text-3xl font-bold text-black">{otp}</span>
-            </div>
-          )}
+          <div className="flex flex-col items-center justify-center bg-gray-50 px-4 py-2 rounded-lg border border-gray-300">
+            <span className="text-base text-black font-semibold mb-1">OTP</span>
+            <span className="text-3xl font-bold text-black">{otp}</span>
+          </div>
+        )}
 
         <div className="w-full flex justify-around text-xl text-white mt-6 mb-4">
           <div className="flex flex-col items-center">
@@ -326,19 +333,31 @@ const ConfirmRide = () => {
               </p>
             </div>
 
-            <div className="flex gap-3">
+            <div className={`flex ${showPaymentMethods ? "gap-0" : "gap-3"}`}>
+              {showPaymentMethods ? (
+                <div></div>
+              ) : (
+                <button
+                  onClick={() => handleCancelRide()}
+                  className={`mt-5 bg-red-500 hover:bg-red-600 text-white w-1/2 py-3 px-4 rounded-lg transition ${
+                    isProcessing ? "opacity-50 cursor-not-allowed" : ""
+                  }`}
+                  disabled={isProcessing}
+                >
+                  Cancel Ride
+                </button>
+              )}
               <button
-                onClick={() => handleButtonClick(true)}
-                className={`mt-5 bg-red-500 hover:bg-red-600 text-white w-1/2 py-3 px-4 rounded-lg transition ${
-                  isProcessing ? "opacity-50 cursor-not-allowed" : ""
-                }`}
-                disabled={isProcessing}
-              >
-                {showPaymentMethods ? "Cash" : "Cancel Ride"}
-              </button>
-              <button
-                onClick={() => handleButtonClick(false)}
-                className={`mt-5 bg-green-500 hover:bg-green-600 text-white w-1/2 py-3 px-4 rounded-lg transition flex items-center justify-center ${
+                onClick={() => {
+                  if (showPaymentMethods) {
+                    handlePayment("online");
+                  } else {
+                    handleButtonClick();
+                  }
+                }}
+                className={`mt-5 bg-green-500 hover:bg-green-600 text-white py-3 px-4 rounded-lg ${
+                  showPaymentMethods ? "w-full" : "w-1/2"
+                } transition flex items-center justify-center ${
                   isProcessing ? "opacity-50 cursor-not-allowed" : ""
                 }`}
                 disabled={isProcessing}
@@ -365,7 +384,7 @@ const ConfirmRide = () => {
                     ></path>
                   </svg>
                 ) : showPaymentMethods ? (
-                  "Online"
+                  "Make Payment"
                 ) : (
                   "Confirm Ride"
                 )}
@@ -390,7 +409,7 @@ const ConfirmRide = () => {
             </p>
           </div>
         )}
-    </div>
+      </div>
     </>
   );
 };

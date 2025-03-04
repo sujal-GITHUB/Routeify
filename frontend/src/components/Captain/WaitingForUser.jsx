@@ -8,7 +8,7 @@ import auto from "../../assets/auto.png";
 import { socketContext } from '../../context/socketContext';
 import axios from 'axios';
 
-const WaitingForUser = ({ rideData, setRideStart, setRideAccepted }) => {
+const WaitingForUser = ({ rideData, setRideStart, setRideAccepted, setNewRide }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { socket } = useContext(socketContext);
@@ -23,6 +23,39 @@ const WaitingForUser = ({ rideData, setRideStart, setRideAccepted }) => {
     auto: auto,
   };
 
+  useEffect(() => {
+    socket.on("ride-confirmed", (data) => {
+      dispatch(setRideData({
+        ...rideData,
+        otp: data.otp,
+        status: 'confirmed'
+      }));
+
+      setRideStart(true);
+      setRideAccepted(false);
+    });
+
+    socket.on("ride-cancelled", () => {
+      console.log("Ride cancelled by user");
+      dispatch(setRideData({
+        pickup: "",
+        destination: "",
+        price: "",
+        vehicletype: "",
+        status: "cancelled"
+      }));
+
+      // Reset component state
+      setRideAccepted(false);
+      setRideStart(false);
+      setNewRide(null);
+    });
+
+    return () => {
+      socket.off("ride-confirmed");
+      socket.off("ride-cancelled");
+    };
+  }, [socket, setRideStart, setRideAccepted, setNewRide, dispatch, rideData]);
 
   return (
     <div className="w-full flex flex-col items-center bg-gray-100 p-5 rounded-xl animate-fade-in mt-6">

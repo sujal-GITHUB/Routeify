@@ -14,7 +14,7 @@ const VehiclePanel = ({ rides, setSelectedRide }) => {
     setSelectedRide(ride.id);
     dispatch(setRideData({
       vehicletype: ride.id,
-      price: fare ? fare[ride.id] : ride.price // Use fetched fare if available
+      price: fare ? fare[ride.id] : ride.price
     }));
   };
 

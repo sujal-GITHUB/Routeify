@@ -78,16 +78,13 @@ const Captain = () => {
     return () => clearInterval(locationIntervalRef.current);
   }, [id, socket]);
 
-  // Handle new ride request
   useEffect(() => {
     socket.on("new-ride", (data) => {
       console.log("🚖 New ride received:", data);
-      // Update Redux store with new ride data
       dispatch(updateCurrentRide({
           ...data,
           status: 'pending'
       }));
-      // Update local state
       setNewRide(data);
       setShowConfirmRide(true);
       setRideAccepted(false);
@@ -95,7 +92,6 @@ const Captain = () => {
     });
 
     socket.on("ride-confirmed", (data) => {
-      // Update Redux store with confirmed status
       dispatch(updateCurrentRide({
           ...data,
           status: 'confirmed'
@@ -107,9 +103,7 @@ const Captain = () => {
     });
 
     socket.on("ride-cancelled", () => {
-      // Clear ride data from Redux
       dispatch(updateCurrentRide(initialState));
-      // Reset local state
       setNewRide(null);
       setRideAccepted(false);
       setRideStart(false);
@@ -123,7 +117,6 @@ const Captain = () => {
     };
   }, [socket, dispatch]);
 
-  // Handle confirm ride animation
   useEffect(() => {
     if (showConfirmRide) {
       gsap.fromTo(
@@ -143,7 +136,6 @@ const Captain = () => {
     }
   }, [showConfirmRide]);
 
-  // Track active time and update backend
   useEffect(() => {
     let updateInterval;
     let midnightReset;
@@ -156,7 +148,6 @@ const Captain = () => {
           { hoursOnline: hours },
           { headers: { Authorization: `Bearer ${token}` } }
         );
-        // Fetch updated captain data after updating hours
         await dispatch(fetchCaptainData());
       } catch (error) {
         console.error("Failed to update hours:", error);
@@ -166,16 +157,14 @@ const Captain = () => {
     if (status === 'active') {
       const startTime = Date.now();
       const baseHours = hoursOnline || 0;
-  
-      // Update hours and fetch data every minute
+
       updateInterval = setInterval(() => {
         const elapsedHours = (Date.now() - startTime) / (1000 * 60 * 60);
         const totalHours = Number((baseHours + elapsedHours).toFixed(2));
         dispatch({ type: 'UPDATE_CAPTAIN_HOURS', payload: totalHours });
         updateHoursInBackend(totalHours);
       }, 60000);
-  
-      // Set up midnight reset
+
       const timeUntilMidnight = getMidnightTime() - Date.now();
       midnightReset = setTimeout(() => {
         dispatch({ type: 'UPDATE_CAPTAIN_HOURS', payload: 0 });
@@ -195,12 +184,10 @@ const Captain = () => {
     });
 
     socket.on("ride-confirmed", (data) => {
-      // When user confirms the ride, show CompleteRide panel
       setRideStart(true);
     });
 
     socket.on("ride-cancelled", () => {
-      // When user cancels, reset everything
       setNewRide(null);
       setRideAccepted(false);
       setRideStart(false);
@@ -214,7 +201,6 @@ const Captain = () => {
 
   if (loading) return <div>Loading captain data...</div>;
 
-  // Toggle panel height
   const togglePanel = () => {
     setIsPanelDown((prev) => !prev);
     gsap.to(panelRef.current, {
@@ -224,7 +210,6 @@ const Captain = () => {
     });
   };
 
-  // Logout function
   const logout = async () => {
     try {
       const token = localStorage.getItem("captaintoken");
@@ -235,7 +220,6 @@ const Captain = () => {
       navigate("/captain-login");
     } catch (error) {
       console.error("Logout failed:", error);
-      alert("Logout failed. Please try again.");
     }
   };
 
@@ -350,11 +334,13 @@ const Captain = () => {
           ) : rideAccepted ? (
             <WaitingForUser 
               rideData={newRide}
+              setNewRide={setNewRide}
               setRideStart={setRideStart}
               setRideAccepted={setRideAccepted}
             />
           ) : rideStart ? (
             <CompleteRide
+              setRideStart={setRideStart}
               rideData={newRide} 
               rides={rides}
             />
