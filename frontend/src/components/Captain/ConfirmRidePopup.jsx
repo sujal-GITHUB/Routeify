@@ -1,8 +1,9 @@
 import React, { useState, forwardRef, useEffect, useContext } from 'react';
 import { socketContext } from '../../context/socketContext';
 import { useSelector } from 'react-redux';
+import gsap from 'gsap'
 
-const ConfirmRidePopup = forwardRef(({ setRides, onAccept, rideData, setRideStart }, ref) => {
+const ConfirmRidePopup = forwardRef(({ setRides, onAccept,setNewRide, rideData, setRideStart }, ref) => {
   const [showFullP, setShowFullP] = useState(false);
   const [showFullD, setShowFullD] = useState(false);
   
@@ -17,8 +18,26 @@ const ConfirmRidePopup = forwardRef(({ setRides, onAccept, rideData, setRideStar
     });
 
     socket.on("ride-no-longer-available", () => {
-      setRideStart(false);
-      setRides([]);
+      gsap.to(ref.current, {
+        opacity: 0,
+        scale: 0.9,
+        y: 30,
+        duration: 0.4,
+        ease: "power2.in",
+        onComplete: () => {
+          setRideStart(false);
+          setNewRide(null);
+          setRides([]);
+          
+          gsap.to(ref.current, {
+            opacity: 1,
+            scale: 1,
+            y: 0,
+            duration: 0.4,
+            ease: "power2.out",
+          });
+        },
+      });
     });
 
     return () => {

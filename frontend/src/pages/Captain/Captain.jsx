@@ -330,6 +330,8 @@ const Captain = () => {
               ref={confirmRideRef}
               rideData={newRide}
               onAccept={handleAccept}
+              setRideStart={setRideStart}
+              setNewRide={setNewRide}
             />
           ) : rideAccepted ? (
             <WaitingForUser 
