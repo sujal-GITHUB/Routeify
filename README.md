@@ -43,12 +43,12 @@ Routeify is a scalable ride-sharing application that connects passengers with dr
    npm run dev
    ```
 
-### Scalability & Performance
+## Scalability & Performance
 - Supports high concurrency with optimized WebSocket communication
 - MongoDB geospatial queries ensure precise and fast driver-passenger matching
 - Modular architecture for future extension (e.g., push notifications, surge pricing)
 
-### Contibuting
+## Contibuting
 I welcome contributions! To get started:
 
 - Fork the repository
@@ -57,5 +57,5 @@ I welcome contributions! To get started:
 - Push to the branch (git push origin feature-name)
 - Create a Pull Request
 
-### License
+## License
 This project is licensed under the MIT License.
