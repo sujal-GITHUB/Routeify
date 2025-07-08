@@ -5,7 +5,7 @@
   "scripts": {
   "dev": "nodemon app.js",
   "start": "node app.js",
-  "build": "echo 'No build step defined'",
+  "build": "npm install && echo 'No build step defined'",
   "test": "jest",
   "lint": "eslint .",
   "format": "prettier --write ."
