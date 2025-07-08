@@ -3,9 +3,15 @@
   "version": "1.0.0",
   "main": "server.js",
   "scripts": {
-    "dev": "npx nodemon",
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
+  "dev": "nodemon app.js",
+  "start": "node app.js",
+  "build": "echo 'No build step defined'",
+  "test": "jest",
+  "lint": "eslint .",
+  "format": "prettier --write .",
+  "prestart": "npm run lint && npm test"
+}
+,
   "keywords": [],
   "author": "",
   "license": "ISC",
