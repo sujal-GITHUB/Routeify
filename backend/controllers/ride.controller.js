@@ -52,7 +52,6 @@ module.exports.createRide = async (req, res) => {
                 data: ride
             });
         });
-        console.log('Ride created successfully!')
 
         return res.status(201).json(ride);
     } catch (err) {

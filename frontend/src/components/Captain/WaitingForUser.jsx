@@ -1,21 +1,23 @@
-import React, { useContext, useEffect, useRef, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
-import { setRideData } from '../../actions/rideActions';
+import gsap from "gsap";
+import React, { useContext, useEffect, useRef, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { setRideData } from "../../actions/rideActions";
 import car from "../../assets/car.png";
 import bike from "../../assets/bike.png";
 import auto from "../../assets/auto.png";
-import { socketContext } from '../../context/socketContext';
-import axios from 'axios';
+import { socketContext } from "../../context/socketContext";
+import axios from "axios";
 
 const WaitingForUser = ({ rideData, setRideStart, setRideAccepted, setNewRide }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { socket } = useContext(socketContext);
+  const rideConfirmedRef = useRef(null); // Reference for animation
   const rideCreatedRef = useRef(false);
   const [isNavigating, setIsNavigating] = useState(false);
-  const ride = useSelector(state => state.ride);
-  const user = useSelector(state => state.user);
+  const ride = useSelector((state) => state.ride);
+  const user = useSelector((state) => state.user);
 
   const rideImages = {
     car: car,
@@ -25,27 +27,36 @@ const WaitingForUser = ({ rideData, setRideStart, setRideAccepted, setNewRide })
 
   useEffect(() => {
     socket.on("ride-confirmed", (data) => {
-      dispatch(setRideData({
-        ...rideData,
-        otp: data.otp,
-        status: 'confirmed'
-      }));
-
-      setRideStart(true);
+      dispatch(
+        setRideData({
+          ...rideData,
+          otp: data.otp,
+          status: "confirmed",
+        })
+      );
       setRideAccepted(false);
+      setRideStart(true);
+
+      // GSAP animation for ride confirmation
+      gsap.fromTo(
+        rideConfirmedRef.current,
+        { opacity: 0, scale: 0.8, y: -20 },
+        { opacity: 1, scale: 1, y: 0, duration: 0.5, ease: "power3.out" }
+      );
     });
 
     socket.on("ride-cancelled", () => {
       console.log("Ride cancelled by user");
-      dispatch(setRideData({
-        pickup: "",
-        destination: "",
-        price: "",
-        vehicletype: "",
-        status: "cancelled"
-      }));
+      dispatch(
+        setRideData({
+          pickup: "",
+          destination: "",
+          price: "",
+          vehicletype: "",
+          status: "cancelled",
+        })
+      );
 
-      // Reset component state
       setRideAccepted(false);
       setRideStart(false);
       setNewRide(null);
@@ -58,7 +69,10 @@ const WaitingForUser = ({ rideData, setRideStart, setRideAccepted, setNewRide })
   }, [socket, setRideStart, setRideAccepted, setNewRide, dispatch, rideData]);
 
   return (
-    <div className="w-full flex flex-col items-center bg-gray-100 p-5 rounded-xl animate-fade-in mt-6">
+    <div
+      ref={rideConfirmedRef}
+      className="w-full flex flex-col items-center bg-gray-100 p-5 rounded-xl animate-fade-in mt-6"
+    >
       <h1 className="text-xl font-bold text-black w-full text-center mb-4">
         Waiting for user confirmation...
       </h1>
