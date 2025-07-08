@@ -97,25 +97,30 @@ const ConfirmRide = () => {
       userId: user
     });
 
+    // Reset all ride-related fields in Redux and UI, including eta and distance
+    dispatch(
+      setRideData({
+        pickup: "",
+        destination: "",
+        price: "",
+        vehicletype: "",
+        distance: "",
+        time: "",
+        _id: "",
+        otp: "",
+        status: "",
+        captain: {},
+        user: {},
+        eta: "",
+      })
+    );
+    navigate("/home");
+
     // Listen for response
     socket.once("ride-cancelled", () => {
       setIsProcessing(false);
-      gsap.to(".ride-details", {
-        opacity: 0,
-        height: 0,
-        duration: 0.3,
-        onComplete: () => {
-          dispatch(
-            setRideData({
-              pickup: "",
-              destination: "",
-              price: "",
-              vehicletype: "",
-            })
-          );
-          navigate("/home");
-        },
-      });
+      dispatch(clearRide());
+      // Reset all ride-related fields in Redux and UI
     });
 
     socket.once("error", (error) => {

@@ -1,8 +1,9 @@
 import { useEffect, useContext, useRef, useState, useCallback } from 'react'
-import { useSelector } from 'react-redux'
+import { useSelector, useDispatch } from 'react-redux'
 import { socketContext } from '../context/socketContext'
 import { FaLocationArrow } from 'react-icons/fa'
 import { useJsApiLoader, GoogleMap, Marker, DirectionsRenderer } from '@react-google-maps/api'
+import { setRideData } from '../actions/rideActions'
 
 const libraries = ['places']
 const mapContainerStyle = {
@@ -15,6 +16,7 @@ function Map() {
   const { socket } = useContext(socketContext)
   const rideState = useSelector(state => state.ride)
   const { pickup, destination, captain } = rideState
+  const dispatch = useDispatch()
 
   const [map, setMap] = useState(null)
   const [captainLocation, setCaptainLocation] = useState(null)
@@ -74,6 +76,42 @@ function Map() {
 
     return () => socket.off('captain-location-update')
   }, [socket])
+
+  // Ride cancel listener
+  useEffect(() => {
+    if (!socket) return
+
+    const handleRideCancelled = () => {
+      setDistance('')
+      setDuration('')
+      setDirectionsResponse(null)
+      dispatch(setRideData({
+        distance: '',
+        time: ''
+      }))
+
+      // Recalculate route with null values
+      if (window.google && window.google.maps && userLocation) {
+        const directionsService = new window.google.maps.DirectionsService()
+        directionsService.route(
+          {
+            origin: userLocation,
+            destination: userLocation,
+            travelMode: window.google.maps.TravelMode.DRIVING,
+          },
+          () => {
+            setDirectionsResponse(null)
+          }
+        )
+      }
+    }
+
+    socket.on('ride-cancelled', handleRideCancelled)
+
+    return () => {
+      socket.off('ride-cancelled', handleRideCancelled)
+    }
+  }, [socket, dispatch, userLocation])
 
   // Route calculation
   useEffect(() => {
@@ -146,11 +184,16 @@ function Map() {
       </div>
 
       <div className="absolute top-4 right-4 bg-white p-4 py-2 rounded-full shadow-md max-w-sm z-10">
-        {!pickup && !destination && (
-          <p className="text-gray-700 mb-2"><i className="ri-user-location-line"></i></p>
+        {!pickup && !destination ? (
+          <p className="text-gray-700 mb-2 text-center">
+            <i className="ri-user-location-line"></i>
+          </p>
+        ) : (
+          <>
+            {distance && <p className="text-gray-700 text-xs">Distance: {distance}</p>}
+            {duration && <p className="text-gray-700 text-xs">ETA: {duration}</p>}
+          </>
         )}
-        {distance && <p className="text-gray-700 text-xs">Distance: {distance}</p>}
-        {duration && <p className="text-gray-700 text-xs">ETA: {duration}</p>}
       </div>
     </div>
   )

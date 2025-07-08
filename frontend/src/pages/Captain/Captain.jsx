@@ -10,8 +10,6 @@ import { fetchCaptainData } from "../../actions/captainActions";
 import { socketContext } from "../../context/socketContext";
 import CompleteRide from "../../components/Captain/CompleteRide";
 import WaitingForUser from "../../components/Captain/WaitingForUser";
-import { updateCurrentRide } from '../../actions/rideActions';
-import LiveTracking from "../LiveTracking";
 
 // Add this helper function at the top of your component
 const getMidnightTime = () => {
@@ -38,7 +36,6 @@ const Captain = () => {
 
   const locationIntervalRef = useRef(null);
   const captainData = useSelector((state) => state.captain);
-  const rideData = useSelector((state) => state.ride);
   const { firstname, lastname, earning, rating, hoursOnline, status, id } = captainData;
 
   // Fetch captain data on mount
@@ -78,13 +75,10 @@ const Captain = () => {
     return () => clearInterval(locationIntervalRef.current);
   }, [id, socket]);
 
+  // Handle new ride request
   useEffect(() => {
     socket.on("new-ride", (data) => {
       console.log("🚖 New ride received:", data);
-      dispatch(updateCurrentRide({
-          ...data,
-          status: 'pending'
-      }));
       setNewRide(data);
       setShowConfirmRide(true);
       setRideAccepted(false);
@@ -92,18 +86,12 @@ const Captain = () => {
     });
 
     socket.on("ride-confirmed", (data) => {
-      dispatch(updateCurrentRide({
-          ...data,
-          status: 'confirmed'
-      }));
-      // Update local state
       setRideStart(true);
       setRideAccepted(false);
       setShowConfirmRide(false);
     });
 
     socket.on("ride-cancelled", () => {
-      dispatch(updateCurrentRide(initialState));
       setNewRide(null);
       setRideAccepted(false);
       setRideStart(false);
@@ -115,8 +103,9 @@ const Captain = () => {
       socket.off("ride-confirmed");
       socket.off("ride-cancelled");
     };
-  }, [socket, dispatch]);
+  }, [socket]);
 
+  // Handle confirm ride animation
   useEffect(() => {
     if (showConfirmRide) {
       gsap.fromTo(
@@ -136,6 +125,7 @@ const Captain = () => {
     }
   }, [showConfirmRide]);
 
+  // Track active time and update backend
   useEffect(() => {
     let updateInterval;
     let midnightReset;
@@ -148,6 +138,7 @@ const Captain = () => {
           { hoursOnline: hours },
           { headers: { Authorization: `Bearer ${token}` } }
         );
+        // Fetch updated captain data after updating hours
         await dispatch(fetchCaptainData());
       } catch (error) {
         console.error("Failed to update hours:", error);
@@ -157,14 +148,16 @@ const Captain = () => {
     if (status === 'active') {
       const startTime = Date.now();
       const baseHours = hoursOnline || 0;
-
+  
+      // Update hours and fetch data every minute
       updateInterval = setInterval(() => {
         const elapsedHours = (Date.now() - startTime) / (1000 * 60 * 60);
         const totalHours = Number((baseHours + elapsedHours).toFixed(2));
         dispatch({ type: 'UPDATE_CAPTAIN_HOURS', payload: totalHours });
         updateHoursInBackend(totalHours);
       }, 60000);
-
+  
+      // Set up midnight reset
       const timeUntilMidnight = getMidnightTime() - Date.now();
       midnightReset = setTimeout(() => {
         dispatch({ type: 'UPDATE_CAPTAIN_HOURS', payload: 0 });
@@ -184,6 +177,7 @@ const Captain = () => {
     });
 
     socket.on("ride-confirmed", (data) => {
+      // When user confirms the ride, show CompleteRide panel
       setRideStart(true);
     });
 
@@ -201,6 +195,7 @@ const Captain = () => {
 
   if (loading) return <div>Loading captain data...</div>;
 
+  // Toggle panel height
   const togglePanel = () => {
     setIsPanelDown((prev) => !prev);
     gsap.to(panelRef.current, {
@@ -210,6 +205,7 @@ const Captain = () => {
     });
   };
 
+  // Logout function
   const logout = async () => {
     try {
       const token = localStorage.getItem("captaintoken");
@@ -220,6 +216,7 @@ const Captain = () => {
       navigate("/captain-login");
     } catch (error) {
       console.error("Logout failed:", error);
+      alert("Logout failed. Please try again.");
     }
   };
 
@@ -260,12 +257,16 @@ const Captain = () => {
       console.error("Failed to update status:", error);
     }
   };
-  
+
   return (
     <div className="h-screen font-lexend relative">
       {/* Background */}
       <div className="absolute inset-0 -z-10">
-        <LiveTracking/>
+        <img
+          src="/image.png"
+          alt="Background"
+          className="w-full h-full object-cover"
+        />
       </div>
 
       {/* Logo */}
@@ -330,19 +331,15 @@ const Captain = () => {
               ref={confirmRideRef}
               rideData={newRide}
               onAccept={handleAccept}
-              setRideStart={setRideStart}
-              setNewRide={setNewRide}
             />
           ) : rideAccepted ? (
             <WaitingForUser 
               rideData={newRide}
-              setNewRide={setNewRide}
               setRideStart={setRideStart}
               setRideAccepted={setRideAccepted}
             />
           ) : rideStart ? (
             <CompleteRide
-              setRideStart={setRideStart}
               rideData={newRide} 
               rides={rides}
             />

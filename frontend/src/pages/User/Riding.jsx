@@ -1,16 +1,22 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useContext } from "react";
 import ConfirmRide from "../../components/User/ConfirmRide";
 import logo from "../../assets/logo1.png";
 import gsap from "gsap";
 import LiveTracking from "../LiveTracking";
 import axios from 'axios'; // Add this import
-import { useSelector } from 'react-redux'; 
+import { useSelector, useDispatch } from 'react-redux'; 
+import { clearRide, setRideData } from '../../actions/rideActions';
+import { useNavigate } from "react-router-dom";
+import { socketContext } from "../../context/socketContext";
 
 const Riding = () => {
   const panelRef = useRef();
   const [isPanelDown, setIsPanelDown] = useState(false);
   const [eta, setEta] = useState(null);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { captain, pickup } = useSelector((state) => state.ride);
+  const { socket } = useContext(socketContext);
   const [isLoading, setIsLoading] = useState(true);
 
   const calculateETA = async () => {
@@ -64,6 +70,27 @@ const Riding = () => {
       };
     }
   }, [captain?.location?.coordinates]);
+
+  // Reset everything and go home if ride data is missing (on reload)
+  useEffect(() => {
+    if (!captain || !pickup) {
+      dispatch(clearRide());
+      dispatch(setRideData({
+        user: {},
+        captain: {},
+        pickup: '',
+        destination: '',
+        price: '',
+        distance: '',
+        time: '',
+        vehicletype: '',
+        _id: '',
+        otp: '',
+        status: ''
+      }));
+      navigate('/home');
+    }
+  }, []); 
 
   const togglePanel = () => {
     const panel = panelRef.current;
@@ -186,3 +213,4 @@ const Riding = () => {
 };
 
 export default Riding;
+

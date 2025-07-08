@@ -146,7 +146,14 @@ const FindCaptains = ({setShowFindCaptains, handleCancelRide}) => {
         </div>
 
         <button 
-          onClick={handleCancelRide}
+          onClick={() => {
+            handleCancelRide();
+            // Also reset eta and distance in Redux
+            dispatch(setRideData({
+              time: "",
+              distance: "",
+            }));
+          }}
           className="bg-red-500 hover:bg-red-600 text-white w-full py-3 px-4 rounded-md transition"
         >
           Cancel Ride Request

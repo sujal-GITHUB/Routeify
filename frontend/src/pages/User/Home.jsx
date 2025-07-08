@@ -283,18 +283,24 @@ const Home = () => {
 
         socket.emit("cancel-ride", { userId: user.id, rideId: rideId });
         console.log("Ride cancelled:", rideId, user.id);
-  
+
         dispatch(setRideData({ 
           pickup: "", 
           destination: "", 
           selectedRide: "",
-          price: ""
+          price: "",
+          distance: "",
+          time: "",
+          rideId: "",
         }));
-  
-        // Reset form inputs
+
+        // Reset form inputs and UI fields
         setInput("");
         setDestinationInput("");
         setShowForm(true);
+
+        // Also clear pickup and destination locations in UI
+        // (if you have local state for pickup/destination, clear them here)
       }
     })
     // Finally show the form
