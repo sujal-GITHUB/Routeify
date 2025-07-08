@@ -8,8 +8,7 @@
   "build": "echo 'No build step defined'",
   "test": "jest",
   "lint": "eslint .",
-  "format": "prettier --write .",
-  "prestart": "npm run lint && npm test"
+  "format": "prettier --write ."
 }
 ,
   "keywords": [],
