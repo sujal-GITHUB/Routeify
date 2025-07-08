@@ -17,6 +17,8 @@ const initializeSocket = (server) => {
     });
 
     io.on("connection", (socket) => {
+        console.log("🔗 New socket connected:", socket.id); // <-- Add this for debugging
+
         socket.on("join", async (data) => {
             try {
                 const { userId, userType } = data;
@@ -391,6 +393,26 @@ const initializeSocket = (server) => {
 
             } catch (error) {
                 console.error("❌ Error handling disconnect:", error);
+            }
+        });
+
+        socket.on("user-rating", async ({ rideId, rating, captainId }) => {
+            try {
+                console.log("user-rating event received:", { rideId, rating, captainId }); // <-- Debug log
+                if (!rideId || !captainId || typeof rating !== "number") {
+                    console.log("user-rating: missing data", { rideId, rating, captainId });
+                    return;
+                }
+
+                const captain = await captainModel.findById(captainId);
+                if (captain && captain.socketId) {
+                    io.to(captain.socketId).emit("user-rating", { rideId, rating });
+                    console.log(`Rating sent to captain ${captainId} (socket: ${captain.socketId}):`, rating);
+                } else {
+                    console.log(`Captain not found or not connected: ${captainId}`);
+                }
+            } catch (error) {
+                console.error("Error handling user-rating:", error);
             }
         });
     });

@@ -240,14 +240,16 @@ const ConfirmRide = () => {
 
   useEffect(() => {
     socket.on("ride-completed", (data) => {
-      dispatch(clearRide());
-      navigate("/success", {
-        state: {
-          pickup: data.pickup,
-          destination: data.destination,
-          fare: data.fare,
-        },
-      });
+      // Do NOT dispatch(clearRide()) here, just navigate to /success
+      setTimeout(() => {
+        navigate("/success", {
+          state: {
+            pickup: data.pickup,
+            destination: data.destination,
+            fare: data.fare,
+          },
+        });
+      }, 100); // small delay to allow any UI updates
     });
 
     return () => {

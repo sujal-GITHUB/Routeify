@@ -1,15 +1,18 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate, useLocation } from 'react-router-dom';
 import gsap from 'gsap';
 import confetti from 'canvas-confetti';
+import { socketContext } from '../../context/socketContext';
 
 const RideSuccess = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [rideDetails, setRideDetails] = useState(null);
   const rideState = useSelector(state => state.ride);
-  
+  const [userRating, setUserRating] = useState(null);
+  const { socket } = useContext(socketContext);
+
   useEffect(() => {
     const locationData = location.state;
     const reduxData = {
@@ -38,11 +41,21 @@ const RideSuccess = () => {
       { opacity: 0, y: 20 },
       { opacity: 1, y: 0, duration: 0.5, stagger: 0.1 }
     );
-
-    return () => {
-      gsap.killTweensOf('.success-content');
-    };
   }, [location.state, rideState, navigate]);
+
+  // Listen for user rating in a separate effect to ensure real-time updates
+  useEffect(() => {
+    if (!socket) return;
+    const handleUserRating = (data) => {
+      if (data && typeof data.rating === "number") {
+        setUserRating(data.rating);
+      }
+    };
+    socket.on("user-rating", handleUserRating);
+    return () => {
+      socket.off("user-rating", handleUserRating);
+    };
+  }, [socket]);
 
   if (!rideDetails) {
     return null;
@@ -50,7 +63,7 @@ const RideSuccess = () => {
 
   const handleSuccess = () => {
     navigate('/captain');
-    };
+  };
 
   const { pickup, destination, fare } = rideDetails;
 
@@ -83,12 +96,15 @@ const RideSuccess = () => {
 
       <div className="success-content w-full max-w-md mb-8">
         <div className="text-center mb-4">
-          <p className="text-sm text-gray-500 mb-2">Rating received</p>
+          <p className="text-sm text-gray-500 mb-2">Rating Received</p>
           <div className="flex justify-center gap-2">
             {[1,2,3,4,5].map((star) => (
-              <button key={star} className="text-2xl text-yellow-400">
+              <span
+                key={star}
+                className={`text-2xl ${userRating && userRating >= star ? "text-yellow-400" : "text-gray-300"}`}
+              >
                 <i className="ri-star-fill"></i>
-              </button>
+              </span>
             ))}
           </div>
         </div>

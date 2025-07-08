@@ -75,7 +75,10 @@ const Captain = () => {
     return () => clearInterval(locationIntervalRef.current);
   }, [id, socket]);
 
-  // Handle new ride request
+  // Add a state to force RecentRides refresh after ride-no-longer-available
+  const [showRecentRides, setShowRecentRides] = useState(false);
+
+  // Handle new ride request and ride-no-longer-available
   useEffect(() => {
     socket.on("new-ride", (data) => {
       console.log("🚖 New ride received:", data);
@@ -83,12 +86,14 @@ const Captain = () => {
       setShowConfirmRide(true);
       setRideAccepted(false);
       setRideStart(false);
+      setShowRecentRides(false); // reset
     });
 
     socket.on("ride-confirmed", (data) => {
       setRideStart(true);
       setRideAccepted(false);
       setShowConfirmRide(false);
+      setShowRecentRides(false);
     });
 
     socket.on("ride-cancelled", () => {
@@ -96,12 +101,23 @@ const Captain = () => {
       setRideAccepted(false);
       setRideStart(false);
       setShowConfirmRide(false);
+      setShowRecentRides(true);
+    });
+
+    // Listen for ride-no-longer-available from ConfirmRidePopup
+    socket.on("ride-no-longer-available", () => {
+      setNewRide(null);
+      setRideAccepted(false);
+      setRideStart(false);
+      setShowConfirmRide(false);
+      setShowRecentRides(true);
     });
 
     return () => {
       socket.off("new-ride");
       socket.off("ride-confirmed");
       socket.off("ride-cancelled");
+      socket.off("ride-no-longer-available");
     };
   }, [socket]);
 
@@ -323,20 +339,23 @@ const Captain = () => {
           </div>
 
           {/* Rides */}
-          {!newRide ? (
+          {showRecentRides || !newRide ? (
             <RecentRides />
           ) : showConfirmRide ? (
             <ConfirmRidePopup
               setRides={setRides}
               ref={confirmRideRef}
+              setNewRide={setNewRide}
               rideData={newRide}
               onAccept={handleAccept}
+              setRideStart={setRideStart}
             />
           ) : rideAccepted ? (
             <WaitingForUser 
               rideData={newRide}
               setRideStart={setRideStart}
               setRideAccepted={setRideAccepted}
+              setNewRide={setNewRide}
             />
           ) : rideStart ? (
             <CompleteRide

@@ -27,14 +27,11 @@ const ConfirmRidePopup = forwardRef(({ setRides, onAccept,setNewRide, rideData, 
         onComplete: () => {
           setRideStart(false);
           setNewRide(null);
-          
-          gsap.to(ref.current, {
-            opacity: 1,
-            scale: 1,
-            y: 0,
-            duration: 0.4,
-            ease: "power2.out",
-          });
+          setRides([]); // This will cause RecentRides to show if used in parent
+          // Also emit event to parent to show RecentRides
+          if (socket) {
+            socket.emit("ride-no-longer-available");
+          }
         },
       });
     });
@@ -43,7 +40,7 @@ const ConfirmRidePopup = forwardRef(({ setRides, onAccept,setNewRide, rideData, 
       socket.off("available-rides");
       socket.off("ride-no-longer-available");
     };
-  }, [socket]); 
+  }, [socket, setRides, setRideStart, setNewRide, ref]); 
 
   const acceptRide = () => {
     if (!rideData || !rideData.user) {
