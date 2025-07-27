@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect, useContext } from "react";
+import { useRef, useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import gsap from "gsap";
 import axios from "axios";
@@ -80,6 +80,7 @@ const Captain = () => {
 
   // Handle new ride request and ride-no-longer-available
   useEffect(() => {
+    if (!socket) return;
     socket.on("new-ride", (data) => {
       console.log("🚖 New ride received:", data);
       setNewRide(data);
@@ -188,6 +189,7 @@ const Captain = () => {
   }, [status, hoursOnline, dispatch]);
 
   useEffect(() => {
+    if (!socket) return;
     socket.on("ride-confirm", (data) => {
       setRideAccepted(false);
     });

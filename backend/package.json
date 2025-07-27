@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "server.js",
   "scripts": {
-  "dev": "nodemon app.js",
+  "dev": "npx nodemon app.js",
   "start": "node app.js",
   "build": "npm install && echo 'No build step defined'",
   "test": "jest",

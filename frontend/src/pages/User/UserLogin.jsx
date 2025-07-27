@@ -62,7 +62,7 @@ const UserLogin = () => {
 
       {/* Login Form Section */}
       <div className="bg-white p-5 flex h-screen flex-col items-center justify-between gap-4 rounded-t-lg">
-        <div className="w-full">
+        <div className="max-w-96 w-full">
           <form className="w-full" onSubmit={submitHandler}> {/* Removed max-w-md */}
             <label htmlFor="email" className="font-medium mb-2 block">
               Email
@@ -114,7 +114,7 @@ const UserLogin = () => {
         {/* Login as Captain Link */}
         <Link
           to="/captain-login"
-          className="bg-blue-600 text-white w-full mx-3 p-3 rounded-md hover:bg-blue-700 transition text-center"
+          className="bg-blue-600 text-white max-w-96 w-full mx-3 p-3 rounded-md hover:bg-blue-700 transition text-center"
         >
           Login as Captain
         </Link>

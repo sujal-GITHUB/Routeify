@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import logo from '../../assets/car1.png';
 import { setCaptainData } from '../../actions/captainActions';
@@ -62,7 +62,7 @@ const CaptainLogin = () => {
 
       {/* Login Form Section */}
       <div className="bg-white p-5 pt-0 flex h-screen flex-col items-center justify-between gap-4 rounded-t-lg">
-        <div className="w-full">
+        <div className="w-full max-w-96">
           <form className="w-full" onSubmit={submitHandler}>
             <label htmlFor="email" className="font-medium mb-2 block">
               Email
@@ -113,7 +113,7 @@ const CaptainLogin = () => {
         {/* Login as User Link */}
         <Link
           to="/login"
-          className="bg-black text-white w-full mx-3 p-3 rounded-md transition text-center"
+          className="bg-black text-white w-full max-w-96 mx-3 p-3 rounded-md transition text-center"
         >
           Login as User
         </Link>

@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useRef, useState } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { setRideData } from '../../actions/rideActions';
@@ -7,8 +7,9 @@ import bike from "../../assets/bike.png";
 import auto from "../../assets/auto.png";
 import { socketContext } from '../../context/socketContext';
 import axios from 'axios';
+import PropTypes from "prop-types";
 
-const FindCaptains = ({setShowFindCaptains, handleCancelRide}) => {
+const FindCaptains = ({ handleCancelRide }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { socket } = useContext(socketContext);
@@ -148,19 +149,31 @@ const FindCaptains = ({setShowFindCaptains, handleCancelRide}) => {
         <button 
           onClick={() => {
             handleCancelRide();
-            // Also reset eta and distance in Redux
             dispatch(setRideData({
+              pickup: "",
+              destination: "",
+              selectedRide: "",
+              price: "",
               time: "",
               distance: "",
+              rideId: "",
+              status: "",
+              captain: "",
+              otp: "",
+              vehicletype: "",
             }));
           }}
-          className="bg-red-500 hover:bg-red-600 text-white w-full py-3 px-4 rounded-md transition"
+          className="bg-red-500 hover:bg-red-600 text-white w-full md:max-w-96 py-3 px-4 rounded-md transition"
         >
           Cancel Ride Request
         </button>
       </div>
     </div>
   );
+};
+
+FindCaptains.propTypes = {
+  handleCancelRide: PropTypes.func.isRequired,
 };
 
 export default FindCaptains;

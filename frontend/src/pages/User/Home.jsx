@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect, useContext } from "react";
+import { useRef, useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { setRideData } from "../../actions/rideActions";
@@ -282,7 +282,10 @@ const Home = () => {
         setUp(false);
 
         socket.emit("cancel-ride", { userId: user.id, rideId: rideId });
-        console.log("Ride cancelled:", rideId, user.id);
+
+
+        setInput("");
+        setDestinationInput("");
 
         dispatch(setRideData({ 
           pickup: "", 
@@ -294,13 +297,7 @@ const Home = () => {
           rideId: "",
         }));
 
-        // Reset form inputs and UI fields
-        setInput("");
-        setDestinationInput("");
         setShowForm(true);
-
-        // Also clear pickup and destination locations in UI
-        // (if you have local state for pickup/destination, clear them here)
       }
     })
     // Finally show the form
@@ -506,7 +503,7 @@ const Home = () => {
       {/* Update the main panel div to handle overflow properly */}
       <div
         ref={mainPanel}
-        className="absolute inset-0 flex flex-col justify-end overflow-hidden"
+        className="absolute w-full inset-0 flex flex-col md:px-20 justify-end overflow-hidden"
       >
         <div className="bg-white p-5 rounded-t-2xl">
           <div className="flex justify-between items-center mb-5">
@@ -642,7 +639,6 @@ const Home = () => {
           >
             {showFindCaptains && (
               <FindCaptains
-                setShowFindCaptains={setShowFindCaptains}
                 handleCancelRide={handleCancelRide}
               />
             )}

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {Link} from 'react-router-dom'
 import logo from '../assets/logo1.png';
-import bgportrait from '../assets/bg-portrait.jpg';
+import bgportrait from '../assets/bg-portrait.png';
 import bglandscape from '../assets/bg-landscape.jpg';
 
 const Start = () => {
