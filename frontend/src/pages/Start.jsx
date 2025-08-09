@@ -10,9 +10,9 @@ const Start = () => {
   // Function to detect screen orientation
   const handleResize = () => {
     if (window.innerHeight > window.innerWidth) {
-      setBackground(bgportrait); // Portrait mode
+      setBackground(bgportrait); 
     } else {
-      setBackground(bglandscape); // Landscape mode
+      setBackground(bglandscape); 
     }
   };
 
