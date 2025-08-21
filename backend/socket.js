@@ -9,13 +9,18 @@ let io;
 const initializeSocket = (server) => {
     io = new Server(server, {
         cors: {
-            origin: process.env.FRONTEND_ORIGIN || "http://localhost:5173",
+            origin: ["http://localhost:5173"],
             methods: ["GET", "POST"],
             credentials: true
-        }
-        });
-
+        },
+        transports: ['websocket', 'polling'],
+        path: '/socket.io',
+        pingTimeout: 60000,
+        pingInterval: 25000
+    });
+    
     io.on("connection", (socket) => {
+        console.log('New WebSocket connection:', socket.id);
 
         socket.on("join", async (data) => {
             try {
@@ -375,22 +380,19 @@ const initializeSocket = (server) => {
     
         socket.on("disconnect", async () => {
             try {
-                // Find and update captain
-                const captain = await captainModel.findOneAndUpdate(
-                    { socketId: socket.id },
-                    { status: "inactive", socketId: null },
-                    { new: true }
-                );
-
-                // Also update user if needed
-                const user = await userModel.findOneAndUpdate(
-                    { socketId: socket.id },
-                    { socketId: null },
-                    { new: true }
-                );
-
+                await Promise.all([
+                    captainModel.findOneAndUpdate(
+                        { socketId: socket.id },
+                        { status: "inactive", socketId: null }
+                    ),
+                    userModel.findOneAndUpdate(
+                        { socketId: socket.id },
+                        { socketId: null }
+                    )
+                ]);
+                console.log("Client disconnected, cleanup complete");
             } catch (error) {
-                console.error("❌ Error handling disconnect:", error);
+                console.error("Disconnect cleanup error:", error);
             }
         });
 
