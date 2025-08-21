@@ -13,8 +13,8 @@ const initializeSocket = (server) => {
             methods: ["GET", "POST"],
             credentials: true
         },
-        transports: ['websocket'],
-        path: '/',
+        transports: ['websocket', 'polling'],
+        path: '/socket.io',
         pingTimeout: 60000,
         pingInterval: 25000
     });

@@ -6,7 +6,6 @@ const cookieParser = require('cookie-parser');
 
 // Load environment variables first
 dotenv.config();
-const PORT = process.env.PORT || 4000;
 const app = express();
 
 // Connect to MongoDB
@@ -38,7 +37,7 @@ app.use('/payments', require('./routes/payment.routes'));
 
 // Basic route
 app.get("/", (req, res) => {
-    res.send('Routeify API is running');
+    res.send('Routeify API is running 🚀');
 });
 
 module.exports = app;
