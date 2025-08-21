@@ -20,7 +20,7 @@ connectToDb()
 
 // Middleware
 app.use(cors({
-  origin: ["http://localhost:5173", "https://routeify.onrender.com"],
+  origin: ["http://localhost:5173", "https://routeify.onrender.com", "http://routeify.live"],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   credentials: true
 }));
