@@ -1,6 +1,6 @@
 # Routeify
 
-Routeify is a scalable ride-sharing application that connects passengers with drivers offering rides in multiple vehicle types such as bikes, cars, and autos. Users can book rides in real time, while drivers (riders) can accept ride requests, manage trips, and track their earnings through an intuitive platform.
+Routeify is a scalable ride-hailing application that connects passengers with drivers offering rides in multiple vehicle types such as bikes, cars, and autos. Users can book rides in real time, while drivers (riders) can accept ride requests, manage trips, and track their earnings through an intuitive platform.
 
 ## Features
 
