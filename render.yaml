@@ -19,6 +19,7 @@ services:
       - type: rewrite
         source: /*
         destination: /index.html
+        force: true
     envVars:
       - key: VITE_BASE_URL
-        value: https://your-backend-service-name.onrender.com
+        value: https://routeify-backend.onrender.com
