@@ -9,7 +9,7 @@ let io;
 const initializeSocket = (server) => {
     io = new Server(server, {
         cors: {
-            origin: ["http://localhost:5173", "https://routeify.onrender.com", "https://routeify.live"],
+            origin: ["http://localhost:5173", "http://localhost:4173", "https://routeify.onrender.com", "https://routeify.live"],
             methods: ["GET", "POST"],
             credentials: true
         },
