@@ -35,6 +35,8 @@ const Riding = () => {
         return;
       }
 
+      console.log('🚗 Calculating ETA for captain at:', captainLat, captainLong, 'to pickup:', pickup);
+      
       const response = await axios.get(
         `${import.meta.env.VITE_BASE_URL}/maps/calculate-ETA`,
         {
@@ -51,10 +53,14 @@ const Riding = () => {
 
       if (response.data && response.data.eta) {
         const minutesToArrival = Math.ceil(response.data.eta);
+        console.log('✅ ETA calculated:', minutesToArrival, 'minutes');
         setEta(minutesToArrival);
+      } else {
+        console.log('⚠️ No ETA in response, using default:', response.data);
+        setEta(5);
       }
     } catch (error) {
-      console.error("Error calculating ETA:", error);
+      console.error("❌ Error calculating ETA:", error.response?.data || error.message);
       setEta(5);
     }
   };

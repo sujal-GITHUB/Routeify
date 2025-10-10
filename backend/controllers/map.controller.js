@@ -82,23 +82,30 @@ const getFeatureDetails = async (req, res) => {
 
 const calculateETA = async (req, res) => {
     try {
+        console.log('📊 ETA calculation request:', req.query);
+        
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
+            console.error('❌ Validation errors:', errors.array());
             return res.status(400).json({ errors: errors.array() });
         }
         
         const { captainLat, captainLong, pickup } = req.query;
         
         if (!captainLat || !captainLong || !pickup) {
+            console.error('❌ Missing required parameters:', { captainLat, captainLong, pickup });
             return res.status(400).json({ 
                 success: false, 
                 message: 'Captain coordinates and pickup location are required' 
             });
         }
         
+        console.log('🚗 Calculating ETA from:', { captainLat, captainLong }, 'to:', pickup);
         const result = await mapsService.calculateETA(captainLat, captainLong, pickup);
+        console.log('✅ ETA calculation successful:', result);
         return res.json(result);
     } catch (error) {
+        console.error('❌ ETA calculation error:', error.message);
         return res.status(500).json({ 
             success: false, 
             message: error.message || 'Failed to calculate ETA' 
