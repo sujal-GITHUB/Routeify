@@ -104,6 +104,15 @@ const initializeSocket = (server) => {
                     return socket.emit("error", { message: "Missing required ride data" });
                 }
 
+                // Get the complete ride data from database
+                const ride = await rideModel.findById(rideId)
+                    .populate('user', 'fullname')
+                    .select('pickup destination fare vehicleType');
+
+                if (!ride) {
+                    return socket.emit("error", { message: "Ride not found" });
+                }
+
                 const captains = await captainModel.find({
                     status: 'active',
                     vehicleType: vehicleType,
@@ -117,11 +126,22 @@ const initializeSocket = (server) => {
                 for (const captain of captains) {
                     sendMessageToSocketId(captain.socketId, {
                         event: 'new-ride-request',
-                        data: { ...rideData, captainId: captain._id }
+                        data: { 
+                            ride: {
+                                _id: ride._id,
+                                pickup: ride.pickup,
+                                destination: ride.destination,
+                                fare: ride.fare,
+                                vehicleType: ride.vehicleType,
+                                user: ride.user
+                            },
+                            captainId: captain._id 
+                        }
                     });
                 }
 
             } catch (error) {
+                console.error('❌ Error in request-ride:', error);
                 socket.emit('error', { message: 'Failed to find captains' });
             }
         });

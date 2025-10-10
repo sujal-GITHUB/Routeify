@@ -428,10 +428,10 @@ module.exports.calculateETA = async (captainLat, captainLong, pickup) => {
             profile: 'driving',
             waypoints: [
                 {
-                    coordinates: [captainLong, captainLat]
+                    coordinates: [parseFloat(captainLong), parseFloat(captainLat)]
                 },
                 {
-                    coordinates: [pickupCoords.longitude, pickupCoords.latitude]
+                    coordinates: [parseFloat(pickupCoords.longitude), parseFloat(pickupCoords.latitude)]
                 }
             ],
             alternatives: false

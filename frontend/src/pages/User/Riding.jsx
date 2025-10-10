@@ -5,7 +5,7 @@ import gsap from "gsap";
 import LiveTracking from "../LiveTracking";
 import axios from 'axios'; // Add this import
 import { useSelector, useDispatch } from 'react-redux'; 
-import { clearRide, setRideData } from '../../actions/rideActions';
+import { clearRide, setRideData, setETA } from '../../actions/rideActions';
 import { useNavigate } from "react-router-dom";
 import { socketContext } from "../../context/socketContext";
 import { TokenManager } from '../../utils/tokenManager';
@@ -13,15 +13,15 @@ import { TokenManager } from '../../utils/tokenManager';
 const Riding = () => {
   const panelRef = useRef();
   const [isPanelDown, setIsPanelDown] = useState(false);
-  const [eta, setEta] = useState(null);
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { captain, pickup } = useSelector((state) => state.ride);
+  const { captain, pickup, eta } = useSelector((state) => state.ride);
+  const [etaCalculated, setEtaCalculated] = useState(false);
   const { socket } = useContext(socketContext);
   const [isLoading, setIsLoading] = useState(true);
 
   const calculateETA = async () => {
-    if (!captain?.location?.coordinates) {
+    if (!captain?.location?.coordinates || etaCalculated) {
       return;
     }
 
@@ -31,7 +31,8 @@ const Riding = () => {
       const token = TokenManager.getToken('usertoken');
       if (!token) {
         console.error('No authentication token found');
-        setEta(5);
+        dispatch(setETA(5));
+        setEtaCalculated(true);
         return;
       }
 
@@ -54,14 +55,17 @@ const Riding = () => {
       if (response.data && response.data.eta) {
         const minutesToArrival = Math.ceil(response.data.eta);
         console.log('✅ ETA calculated:', minutesToArrival, 'minutes');
-        setEta(minutesToArrival);
+        dispatch(setETA(minutesToArrival));
+        setEtaCalculated(true);
       } else {
         console.log('⚠️ No ETA in response, using default:', response.data);
-        setEta(5);
+        dispatch(setETA(5));
+        setEtaCalculated(true);
       }
     } catch (error) {
       console.error("❌ Error calculating ETA:", error.response?.data || error.message);
-      setEta(5);
+      dispatch(setETA(5));
+      setEtaCalculated(true);
     }
   };
 
