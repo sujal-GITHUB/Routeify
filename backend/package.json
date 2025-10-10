@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "build": "echo 'Nothing to build for backend'"
+    "build": "npm install"
   },
   "dependencies": {
     "@mapbox/mapbox-sdk": "^0.16.2",

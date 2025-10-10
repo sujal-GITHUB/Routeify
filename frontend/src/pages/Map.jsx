@@ -44,7 +44,7 @@ function Map() {
   useEffect(() => {
     if (!socket) return
 
-    socket.on('captain-location-update', (data) => {
+    socket.on('captain-location-update', async (data) => {
       if (!pickup || !destination) {
         setDistance('')
         setDuration('')
@@ -96,7 +96,7 @@ function Map() {
       } finally {
         setIsCalculating(false)
       }
-    }
+    });
 
     calculateRouteInfo()
   }, [pickup, destination])
