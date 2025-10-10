@@ -56,6 +56,7 @@ const App = () => {
             <Route path="/signup" element={<UserSignUp />} />
             <Route path="/captain-signup" element={<CaptainSignup />} />
             <Route path="/captain-login" element={<CaptainLogin />} />
+            <Route path="*" element={<Start />} />
           </Routes>
         </div>
       </SocketProvider>
