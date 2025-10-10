@@ -4,6 +4,10 @@ import './index.css'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import App from './App.jsx'
 import {BrowserRouter} from "react-router-dom"
+import { initializeTokenCleanup } from './utils/tokenManager'
+
+// Initialize token cleanup on app start
+initializeTokenCleanup();
 
 // Disable Mapbox telemetry globally before any map initialization
 if (window.mapboxgl) {
