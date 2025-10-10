@@ -97,8 +97,6 @@ function Map() {
         setIsCalculating(false)
       }
     });
-
-    calculateRouteInfo()
   }, [pickup, destination])
 
   // Calculate center point for map
