@@ -95,7 +95,6 @@ const Captain = () => {
     });
 
     socket.on("ride-confirmed", (data) => {
-      console.log("🚗 Ride confirmed by user, starting ride...");
       setRideStart(true);
       setRideAccepted(false);
       setShowConfirmRide(false);
@@ -103,7 +102,6 @@ const Captain = () => {
     });
 
     socket.on("ride-cancelled", () => {
-      console.log("❌ Ride cancelled");
       setNewRide(null);
       setRideAccepted(false);
       setRideStart(false);
@@ -113,7 +111,6 @@ const Captain = () => {
 
     // Listen for ride-no-longer-available from ConfirmRidePopup
     socket.on("ride-no-longer-available", () => {
-      console.log("🚫 Ride no longer available");
       setNewRide(null);
       setRideAccepted(false);
       setRideStart(false);
@@ -234,7 +231,6 @@ const Captain = () => {
 
   // Accept ride function
   const handleAccept = () => {
-    console.log("🚗 Captain accepting ride - transitioning to waiting for user");
     gsap.to(confirmRideRef.current, {
       opacity: 0,
       scale: 0.8,
@@ -245,7 +241,6 @@ const Captain = () => {
         setShowConfirmRide(false);
         setRideAccepted(true);
         setRideStart(false);
-        console.log("⏳ Now waiting for user confirmation...");
       },
     });
   };
@@ -332,16 +327,6 @@ const Captain = () => {
             </h3>
           </div>
 
-          {/* Debug Panel - Remove in production */}
-          <div className="mb-4 p-2 bg-gray-100 rounded text-xs">
-            <strong>Debug State:</strong><br/>
-            showConfirmRide: {showConfirmRide ? 'true' : 'false'}<br/>
-            rideAccepted: {rideAccepted ? 'true' : 'false'}<br/>
-            rideStart: {rideStart ? 'true' : 'false'}<br/>
-            newRide: {newRide ? 'exists' : 'null'}<br/>
-            Socket Connected: {socket?.connected ? 'true' : 'false'}<br/>
-            Captain ID: {id || 'null'}
-          </div>
 
           {/* Rides */}
           {showRecentRides || !newRide ? (

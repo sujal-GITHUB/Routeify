@@ -141,7 +141,6 @@ const initializeSocket = (server) => {
                 }
 
             } catch (error) {
-                console.error('❌ Error in request-ride:', error);
                 socket.emit('error', { message: 'Failed to find captains' });
             }
         });

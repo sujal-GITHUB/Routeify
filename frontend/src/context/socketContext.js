@@ -16,19 +16,19 @@ export const socket = io(BASE_URL, {
 
 // Add connection event handlers
 socket.on("connect_error", (error) => {
-  console.error("❌ Socket connection error:", error);
+  console.error("Socket connection error:", error);
 });
 
 socket.on("connect", () => {
-  console.log("✅ Socket connected successfully");
+  // Socket connected
 });
 
 socket.on("disconnect", (reason) => {
-  console.log("🔌 Socket disconnected:", reason);
+  // Socket disconnected
 });
 
 socket.on("reconnect", (attemptNumber) => {
-  console.log("🔄 Socket reconnected after", attemptNumber, "attempts");
+  // Socket reconnected
 });
 
 // Create context only once

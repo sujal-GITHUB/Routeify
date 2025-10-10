@@ -26,13 +26,7 @@ const WaitingForUser = ({ rideData, setRideStart, setRideAccepted, setNewRide })
   };
 
   useEffect(() => {
-    console.log("🎯 WaitingForUser mounted - Setting up socket listeners");
-    console.log("🔌 Socket connected:", socket.connected);
-    console.log("📊 Ride data:", rideData);
-
     socket.on("ride-confirmed", (data) => {
-      console.log("✅ Ride confirmed in WaitingForUser component - User has confirmed the ride");
-      console.log("📦 Received data:", data);
       dispatch(
         setRideData({
           ...rideData,
@@ -52,7 +46,6 @@ const WaitingForUser = ({ rideData, setRideStart, setRideAccepted, setNewRide })
     });
 
     socket.on("ride-cancelled", () => {
-      console.log("❌ Ride cancelled in WaitingForUser component");
       dispatch(
         setRideData({
           pickup: "",
@@ -70,12 +63,10 @@ const WaitingForUser = ({ rideData, setRideStart, setRideAccepted, setNewRide })
 
     // Add a timeout to prevent indefinite waiting
     const timeoutId = setTimeout(() => {
-      console.log("⏰ Waiting timeout - Ride may have been cancelled by user");
-      // Don't auto-redirect, just show a message
+      // Timeout reached
     }, 300000); // 5 minutes timeout
 
     return () => {
-      console.log("🧹 Cleaning up WaitingForUser socket listeners");
       socket.off("ride-confirmed");
       socket.off("ride-cancelled");
       clearTimeout(timeoutId);
@@ -113,21 +104,6 @@ const WaitingForUser = ({ rideData, setRideStart, setRideAccepted, setNewRide })
           </div>
         </div>
 
-        {/* Debug info and manual override for production */}
-        <div className="mt-4 p-2 bg-yellow-100 rounded text-xs">
-          <div>Socket Connected: {socket?.connected ? '✅' : '❌'}</div>
-          <div>Waiting for user confirmation...</div>
-          <button 
-            onClick={() => {
-              console.log("🚨 Manual override - simulating ride confirmed");
-              setRideStart(true);
-              setRideAccepted(false);
-            }}
-            className="mt-2 px-3 py-1 bg-red-500 text-white rounded text-xs"
-          >
-            Manual Override (Debug)
-          </button>
-        </div>
       </div>
     </div>
   );

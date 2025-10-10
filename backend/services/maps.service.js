@@ -410,7 +410,6 @@ module.exports.calculateETA = async (captainLat, captainLong, pickup) => {
     try {
         const accessToken = process.env.MAPBOX_ACCESS_TOKEN;
         if (!accessToken) {
-            console.error('❌ MAPBOX_ACCESS_TOKEN not found in environment variables');
             throw new Error('Mapbox access token is not configured. Please set MAPBOX_ACCESS_TOKEN in your environment variables.');
         }
 
