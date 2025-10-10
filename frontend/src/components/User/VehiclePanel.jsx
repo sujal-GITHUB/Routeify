@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { setRideData } from '../../actions/rideActions';
 import axios from 'axios';
+import { TokenManager } from '../../utils/tokenManager';
 
 const VehiclePanel = ({ rides, setSelectedRide }) => {
   const dispatch = useDispatch();
@@ -22,10 +23,38 @@ const VehiclePanel = ({ rides, setSelectedRide }) => {
     const fetchFare = async () => {
       try {
         setLoading(true);
+        const token = TokenManager.getToken('usertoken');
+        if (!token) {
+          setError('Authentication required. Please login again.');
+          return;
+        }
+
+        // Check if we have coordinates for accurate fare calculation
+        const pickupHasCoords = pickup && typeof pickup === 'object' && pickup.latitude && pickup.longitude;
+        const destinationHasCoords = destination && typeof destination === 'object' && destination.latitude && destination.longitude;
+        
+        let params;
+        
+        if (pickupHasCoords && destinationHasCoords) {
+          // Use coordinates for accurate calculation
+          params = {
+            pickupLat: pickup.latitude,
+            pickupLng: pickup.longitude,
+            destLat: destination.latitude,
+            destLng: destination.longitude
+          };
+        } else {
+          // Fallback to address strings
+          params = {
+            pickup: typeof pickup === 'string' ? pickup : pickup?.formatted_address || '',
+            destination: typeof destination === 'string' ? destination : destination?.formatted_address || ''
+          };
+        }
+
         const response = await axios.get(`${import.meta.env.VITE_BASE_URL}/rides/fare`, {
-          params: { pickup, destination },
+          params,
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('usertoken')}`
+            'Authorization': `Bearer ${token}`
           }
         });
 

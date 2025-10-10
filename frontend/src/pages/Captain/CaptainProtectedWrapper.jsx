@@ -1,9 +1,10 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { TokenManager } from '../../utils/tokenManager';
 
 const CaptainProtectedWrapper = ({ children }) => {
   const navigate = useNavigate();
-  const token = localStorage.getItem('captaintoken');
+  const token = TokenManager.getToken('captaintoken');
 
   useEffect(() => {
     if (!token) {

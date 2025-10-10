@@ -46,7 +46,6 @@ const WaitingForUser = ({ rideData, setRideStart, setRideAccepted, setNewRide })
     });
 
     socket.on("ride-cancelled", () => {
-      console.log("Ride cancelled by user");
       dispatch(
         setRideData({
           pickup: "",
@@ -81,11 +80,11 @@ const WaitingForUser = ({ rideData, setRideStart, setRideAccepted, setNewRide })
         <div className="bg-white p-4 rounded-xl space-y-2">
           <div>
             <p className="text-sm text-gray-500">Pickup Location</p>
-            <p className="font-medium">{rideData?.pickup}</p>
+            <p className="font-medium">{typeof rideData?.pickup === 'string' ? rideData.pickup : rideData?.pickup?.formatted_address || "N/A"}</p>
           </div>
           <div>
             <p className="text-sm text-gray-500">Destination</p>
-            <p className="font-medium">{rideData?.destination}</p>
+            <p className="font-medium">{typeof rideData?.destination === 'string' ? rideData.destination : rideData?.destination?.formatted_address || "N/A"}</p>
           </div>
           <div>
             <p className="text-sm text-gray-500">Estimated Fare</p>

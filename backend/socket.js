@@ -9,7 +9,7 @@ let io;
 const initializeSocket = (server) => {
     io = new Server(server, {
         cors: {
-            origin: ["http://localhost:5173"],
+            origin: ["http://localhost:5173", "https://routeify.onrender.com", "https://routeify.live"],
             methods: ["GET", "POST"],
             credentials: true
         },
@@ -20,7 +20,6 @@ const initializeSocket = (server) => {
     });
     
     io.on("connection", (socket) => {
-        console.log('New WebSocket connection:', socket.id);
 
         socket.on("join", async (data) => {
             try {
@@ -29,8 +28,6 @@ const initializeSocket = (server) => {
                 if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
                     return socket.emit("error", { message: "Invalid userId" });
                 }
-
-                console.log(`✅ ${userType} Joined : ${userId}`);
 
                 if (userType === "user") {
                     const updatedUser = await userModel.findByIdAndUpdate(
@@ -51,7 +48,6 @@ const initializeSocket = (server) => {
                         return socket.emit("error", { message: "Captain not found" });
                     }
                 } else {
-                    console.error(`Invalid userType: ${userType}`);
                     return socket.emit("error", { message: "Invalid userType" });
                 }
 
@@ -59,7 +55,6 @@ const initializeSocket = (server) => {
                 socket.emit("joined", { userId, socketId: socket.id });
 
             } catch (error) {
-                console.error('Join error:', error);
                 socket.emit("error", { message: "Internal server error" });
             }
         });
@@ -97,7 +92,6 @@ const initializeSocket = (server) => {
                 });
 
             } catch (error) {
-                console.error('Location update error:', error);
                 socket.emit("error", { message: "Failed to update location" });
             }
         });
@@ -120,8 +114,6 @@ const initializeSocket = (server) => {
                     return socket.emit("no-captains-available");
                 }
 
-                console.log(`✅ Active Captains Found: ${captains.length}`);
-
                 for (const captain of captains) {
                     sendMessageToSocketId(captain.socketId, {
                         event: 'new-ride-request',
@@ -130,7 +122,6 @@ const initializeSocket = (server) => {
                 }
 
             } catch (error) {
-                console.error('Request ride error:', error);
                 socket.emit('error', { message: 'Failed to find captains' });
             }
         });
@@ -172,13 +163,11 @@ const initializeSocket = (server) => {
             .select('+otp');
 
             if (!ride) {
-                console.error('No pending ride found for user:', userId);
                 return socket.emit("error", { message: "No pending ride found" });
             }
 
             const user = await userModel.findById(userId);
             if (!user || !user.socketId) {
-                console.error('User not found or not connected:', userId);
                 return socket.emit("error", { message: "User not connected" });
             }
 
@@ -214,8 +203,7 @@ const initializeSocket = (server) => {
             });
 
             } catch (error) {
-            console.error('Ride acceptance error:', error);
-            socket.emit("error", { message: "Failed to accept ride" });
+                socket.emit("error", { message: "Failed to accept ride" });
             }
         });
 
@@ -249,7 +237,6 @@ const initializeSocket = (server) => {
                 sendMessageToAllCaptains(rideId, 'ride-no-longer-available');
             
             } catch (error) {
-                console.error('Cancel ride error:', error);
                 socket.emit("error", { message: "Failed to cancel ride" });
             }
         });
@@ -282,7 +269,6 @@ const initializeSocket = (server) => {
                 })
                 .select('+otp');
                 if (!ride) {
-                    console.error('No acceptable ride found:', rideId);
                     return socket.emit("error", { message: "Ride not found or cannot be confirmed" });
                 }
 
@@ -293,7 +279,6 @@ const initializeSocket = (server) => {
                         .select('+otp');
 
                     if (!fullRide.captain) {
-                        console.error('Captain not found for ride:', rideId);
                         return socket.emit("error", { message: "Captain not found" });
                     }
 
@@ -314,7 +299,6 @@ const initializeSocket = (server) => {
                 });
 
                 if (!messageSent) {
-                    console.error('Failed to notify captain:', ride.captain.socketId);
                     return socket.emit("error", { message: "Could not notify captain" });
                 }
 
@@ -325,7 +309,6 @@ const initializeSocket = (server) => {
                 });
 
             } catch (error) {
-                console.error('Ride confirmation error:', error);
                 socket.emit("error", { message: "Failed to confirm ride" });
             }
         });
@@ -373,7 +356,6 @@ const initializeSocket = (server) => {
                 });
         
             } catch (error) {
-                console.error('Ride completion error:', error);
                 socket.emit("error", { message: "Failed to complete ride" });
             }
         });
@@ -390,29 +372,31 @@ const initializeSocket = (server) => {
                         { socketId: null }
                     )
                 ]);
-                console.log("Client disconnected, cleanup complete");
             } catch (error) {
-                console.error("Disconnect cleanup error:", error);
+                // Silent cleanup
             }
         });
 
         socket.on("user-rating", async ({ rideId, rating, captainId }) => {
             try {
-                console.log("user-rating event received:", { rideId, rating, captainId }); // <-- Debug log
+                // Validate input data
                 if (!rideId || !captainId || typeof rating !== "number") {
-                    console.log("user-rating: missing data", { rideId, rating, captainId });
-                    return;
+                    return socket.emit("error", { message: "Invalid rating data provided" });
+                }
+
+                // Validate rating range
+                if (rating < 1 || rating > 5) {
+                    return socket.emit("error", { message: "Rating must be between 1 and 5" });
                 }
 
                 const captain = await captainModel.findById(captainId);
                 if (captain && captain.socketId) {
                     io.to(captain.socketId).emit("user-rating", { rideId, rating });
-                    console.log(`Rating sent to captain ${captainId} (socket: ${captain.socketId}):`, rating);
                 } else {
-                    console.log(`Captain not found or not connected: ${captainId}`);
+                    return socket.emit("error", { message: "Captain not found or not connected" });
                 }
             } catch (error) {
-                console.error("Error handling user-rating:", error);
+                socket.emit("error", { message: "Failed to process rating" });
             }
         });
     });
@@ -421,13 +405,12 @@ const initializeSocket = (server) => {
 function sendMessageToSocketId(socketId, messageObject) {
     try {
         if (!io.sockets.sockets.has(socketId)) {
-            console.error(`Socket ${socketId} not found`);
             return false;
         }
+        
         io.to(socketId).emit(messageObject.event, messageObject.data);
         return true;
     } catch (error) {
-        console.error("❌ Error sending message via socket:", error);
         return false;
     }
 }
@@ -436,7 +419,7 @@ function sendMessageToAllCaptains(rideId, event) {
     try {
         io.emit(event, { rideId });
     } catch (error) {
-        console.error(`❌ Error broadcasting ${event}:`, error);
+        // Silent error handling
     }
 }
 

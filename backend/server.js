@@ -12,10 +12,4 @@ initializeSocket(server);
 
 // Start server
 server.listen(PORT, () => {
-  console.log("\n┌──────────────────────────────────────┐");
-  console.log("│        Routeify API Server           │");
-  console.log("├──────────────────────────────────────┤");
-  console.log(`│ 🚀 Running on: http://localhost:${PORT} │`);
-  console.log("│ 🌐 WebSocket also on same port       │");
-  console.log("└──────────────────────────────────────┘\n");
 });

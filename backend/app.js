@@ -11,7 +11,6 @@ const app = express();
 // Connect to MongoDB
 connectToDb()
   .then(() => {
-    console.log('✅ Database connection initialized');
   })
   .catch(err => {
     console.error('❌ Database connection failed:', err.message);

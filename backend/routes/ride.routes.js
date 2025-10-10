@@ -15,8 +15,6 @@ router.post('/create', authMiddleware.authUser,
 
 router.get('/fare', 
     authMiddleware.authUser,
-    query('pickup').isString().isLength({min:3}).withMessage('Invalid pickup location'),
-    query('destination').isString().isLength({min:3}).withMessage('Invalid destination location'),
     rideController.getFare
 )
 

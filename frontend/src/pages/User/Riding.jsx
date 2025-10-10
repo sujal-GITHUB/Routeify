@@ -8,6 +8,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { clearRide, setRideData } from '../../actions/rideActions';
 import { useNavigate } from "react-router-dom";
 import { socketContext } from "../../context/socketContext";
+import { TokenManager } from '../../utils/tokenManager';
 
 const Riding = () => {
   const panelRef = useRef();
@@ -21,12 +22,18 @@ const Riding = () => {
 
   const calculateETA = async () => {
     if (!captain?.location?.coordinates) {
-      console.log('No captain coordinates available');
       return;
     }
 
     try {
       const [captainLong, captainLat] = captain.location.coordinates;
+
+      const token = TokenManager.getToken('usertoken');
+      if (!token) {
+        console.error('No authentication token found');
+        setEta(5);
+        return;
+      }
 
       const response = await axios.get(
         `${import.meta.env.VITE_BASE_URL}/maps/calculate-ETA`,
@@ -37,7 +44,7 @@ const Riding = () => {
             pickup: pickup,
           },
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("usertoken")}`,
+            Authorization: `Bearer ${token}`,
           },
         }
       );

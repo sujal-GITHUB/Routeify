@@ -5,9 +5,12 @@ export const setCaptainData = (captainData) => ({
     payload: captainData, 
   });
 
+import { TokenManager } from '../utils/tokenManager';
+
   export const fetchCaptainData = () => async (dispatch) => {
     try {
-      const token = localStorage.getItem("captaintoken");
+      const token = TokenManager.getToken("captaintoken");
+
       const response = await axios.get(`${import.meta.env.VITE_BASE_URL}/captains/profile`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -23,7 +26,7 @@ export const setCaptainData = (captainData) => ({
         location: response.data.captain.location,
         hoursOnline: response.data.captain.hoursOnline || 0,
       };
-  
+
       dispatch({
         type: 'FETCH_CAPTAIN_DATA_SUCCESS',
         payload: captainData

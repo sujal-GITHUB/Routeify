@@ -9,6 +9,7 @@ import axios from "axios";
 import payment_success from "../../assets/payment-success.png";
 import payment_error from "../../assets/payment-error.png";
 import { socketContext } from "../../context/socketContext";
+import { TokenManager } from '../../utils/tokenManager';
 
 export const RatingStars = ({ rating }) => {
   const ratingNum = parseFloat(rating);
@@ -62,12 +63,18 @@ const ConfirmRide = () => {
 
     const fetchDistanceTime = async () => {
       try {
+        const token = TokenManager.getToken("usertoken");
+        if (!token) {
+          console.error("No authentication token found");
+          return;
+        }
+
         const response = await axios.get(
           `${import.meta.env.VITE_BASE_URL}/maps/get-distance-time`,
           {
             params: { origin: pickup, destination },
             headers: {
-              Authorization: `Bearer ${localStorage.getItem("usertoken")}`,
+              Authorization: `Bearer ${token}`,
             },
           }
         );
@@ -142,12 +149,18 @@ const ConfirmRide = () => {
       setPaymentStatus(null);
 
       if (paymentMethod === "online") {
+        const token = TokenManager.getToken("usertoken");
+        if (!token) {
+          console.error("No authentication token found");
+          return;
+        }
+
         const { data } = await axios.post(
           `${import.meta.env.VITE_BASE_URL}/payments/create-order`,
           { amount: price, currency: "INR" },
           {
             headers: {
-              Authorization: `Bearer ${localStorage.getItem("usertoken")}`,
+              Authorization: `Bearer ${token}`,
             },
           }
         );

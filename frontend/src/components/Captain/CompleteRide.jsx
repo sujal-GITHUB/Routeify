@@ -1,10 +1,10 @@
-import React, { useState, forwardRef, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { socketContext } from '../../context/socketContext';
 import { clearRide } from '../../actions/rideActions';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
-const CompleteRide = forwardRef(({ onAccept, rides, rideData }, ref) => {
+const CompleteRide = ({ onAccept, rides, rideData }) => {
   const [showFullP, setShowFullP] = useState(false);
   const [showFullD, setShowFullD] = useState(false);
   const [otpValue, setOtpValue] = useState('');
@@ -64,7 +64,6 @@ const CompleteRide = forwardRef(({ onAccept, rides, rideData }, ref) => {
     }
 };
 
-
   useEffect(() => {
     return () => {
       socket.off('ride-completion-success');
@@ -73,7 +72,7 @@ const CompleteRide = forwardRef(({ onAccept, rides, rideData }, ref) => {
   }, [socket]);
 
   return (
-    <div ref={ref} className='bg-gray-100 h-92 w-full p-5 rounded-xl animate-slide-up mt-5'>
+    <div className='bg-gray-100 h-92 w-full p-5 rounded-xl animate-slide-up mt-5'>
       <h1 className='text-lg font-semibold text-start mb-2'>Complete Ride</h1>
 
       <div className='space-y-4'>
@@ -90,7 +89,7 @@ const CompleteRide = forwardRef(({ onAccept, rides, rideData }, ref) => {
                   showFullP ? 'max-h-[500px]' : 'max-h-7 overflow-hidden'
                 }`}
               >
-                {rideData?.pickup || "N/A"}
+                {typeof rideData?.pickup === 'string' ? rideData.pickup : rideData?.pickup?.formatted_address || "N/A"}
               </p>
             </div>
           </div>
@@ -109,7 +108,7 @@ const CompleteRide = forwardRef(({ onAccept, rides, rideData }, ref) => {
                   showFullD ? 'max-h-[500px]' : 'max-h-7 overflow-hidden'
                 }`}
               >
-                {rideData?.destination || "N/A"}
+                {typeof rideData?.destination === 'string' ? rideData.destination : rideData?.destination?.formatted_address || "N/A"}
               </p>
             </div>
           </div>
@@ -155,8 +154,6 @@ const CompleteRide = forwardRef(({ onAccept, rides, rideData }, ref) => {
       </div>
     </div>
   );
-});
-
-CompleteRide.displayName = "CompleteRide";
+};
 
 export default CompleteRide;

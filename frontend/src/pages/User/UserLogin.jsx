@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import logo from '../../assets/logo1.png';
+import halfPageImage from '../../assets/half_page.jpg';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useDispatch } from 'react-redux';
 import { setUserData } from '../../actions/userActions';
+import { TokenManager } from '../../utils/tokenManager';
 
 const UserLogin = () => {
   const [email, setEmail] = useState('');
@@ -27,12 +29,9 @@ const UserLogin = () => {
 
         setEmail('');
         setPassword('');
-        localStorage.setItem('usertoken',response.data.token)
+        TokenManager.setToken('usertoken', response.data.token, 24)
         navigate('/home');
       }
-      setTimeout(() => {
-        localStorage.removeItem('usertoken');
-      }, 3600000); // 1 hour in milliseconds
     } catch (err) {
       if (err.response) {
         switch (err.response.status) {
@@ -54,16 +53,28 @@ const UserLogin = () => {
   };
 
   return (
-    <div className="h-screen bg-cover bg-center font-lexend flex flex-col justify-between">
-      {/* Logo Section */}
-      <div className="p-5">
-        <img src={logo} alt="Routeify Logo" className="w-20 mx-auto" />
+    <div className="h-screen bg-cover bg-center font-lexend flex">
+      {/* Half Page Image - Left Side (Desktop Only) */}
+      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
+        <img 
+          src={halfPageImage} 
+          alt="Routeify Background" 
+          className="w-full h-full object-cover transition-transform duration-500 ease-in-out hover:scale-105"
+        />
+        <div className="absolute inset-0 bg-black bg-opacity-20"></div>
       </div>
 
-      {/* Login Form Section */}
-      <div className="bg-white p-5 flex h-screen flex-col items-center justify-between gap-4 rounded-t-lg">
-        <div className="max-w-96 w-full">
-          <form className="w-full" onSubmit={submitHandler}> {/* Removed max-w-md */}
+      {/* Login Section - Right Side (Desktop) / Full Width (Mobile) */}
+      <div className="w-full lg:w-1/2 flex flex-col justify-between">
+        {/* Logo Section */}
+        <div className="p-5">
+          <img src={logo} alt="Routeify Logo" className="w-20 mx-auto" />        
+        </div>
+
+        {/* Login Form Section */}
+        <div className="bg-white p-5 flex h-screen flex-col items-center justify-between gap-4 rounded-t-lg md:max-w-md md:mx-auto md:w-full">
+          <div className="max-w-96 w-full md:max-w-none">
+            <form className="w-full" onSubmit={submitHandler}> {/* Removed max-w-md */}
             <label htmlFor="email" className="font-medium mb-2 block">
               Email
             </label>
@@ -109,15 +120,16 @@ const UserLogin = () => {
             </Link>
           </p>
           
-        </div>
+          </div>
 
-        {/* Login as Captain Link */}
-        <Link
-          to="/captain-login"
-          className="bg-blue-600 text-white max-w-96 w-full mx-3 p-3 rounded-md hover:bg-blue-700 transition text-center"
-        >
-          Login as Captain
-        </Link>
+          {/* Login as Captain Link */}
+          <Link
+            to="/captain-login"
+            className="bg-blue-600 text-white max-w-96 w-full mx-3 p-3 rounded-md hover:bg-blue-700 transition text-center"
+          >
+            Login as Captain
+          </Link>
+        </div>
       </div>
     </div>
   );

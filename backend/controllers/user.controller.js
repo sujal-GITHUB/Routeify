@@ -75,7 +75,8 @@ const blacklistToken = require('../models/blacklistToken.model')
       const token = user.generateAuthToken();
       res.cookie('token', token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'development',
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
         maxAge: 3600000
       })
 
@@ -100,9 +101,46 @@ const blacklistToken = require('../models/blacklistToken.model')
     res.status(200).json({message: 'Logged out'})
   }
 
-  module.exports.makePaymentRequest = makePaymentRequest = async(req, res) => {
+  module.exports.makePaymentRequest = async(req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
+    }
+
+    const { amount, currency } = req.body;
+
+    try {
+      if (!amount || isNaN(amount) || amount <= 0) {
+        return res.status(400).json({ message: "Invalid amount provided" });
+      }
+
+      // Import Razorpay here to avoid circular dependencies
+      const Razorpay = require("razorpay");
+      const razorpay = new Razorpay({
+        key_id: process.env.RAZORPAY_KEY_ID,
+        key_secret: process.env.RAZORPAY_KEY_SECRET,
+      });
+
+      const options = {
+        amount: amount * 100, // Convert to paise (smallest unit)
+        currency: currency || "INR",
+        receipt: `receipt_${Date.now()}_${req.user._id}`,
+        payment_capture: 1,
+      };
+
+      const order = await razorpay.orders.create(options);
+
+      res.status(200).json({ 
+        success: true, 
+        order,
+        message: "Payment order created successfully"
+      });
+    } catch (error) {
+      console.error("Payment Request Error:", error);
+      res.status(500).json({ 
+        success: false,
+        message: "Failed to create payment order",
+        error: error.message 
+      });
     }
   }

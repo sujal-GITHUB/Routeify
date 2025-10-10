@@ -72,7 +72,7 @@ const ConfirmRidePopup = forwardRef(({ setRides, onAccept,setNewRide, rideData, 
                   showFullP ? 'max-h-[500px]' : 'max-h-30 overflow-hidden'
                 }`}
               >
-                {rideData?.pickup || "N/A"}
+                {typeof rideData?.pickup === 'string' ? rideData.pickup : rideData?.pickup?.formatted_address || "N/A"}
               </p>
             </div>
           </div>
@@ -91,7 +91,7 @@ const ConfirmRidePopup = forwardRef(({ setRides, onAccept,setNewRide, rideData, 
                   showFullD ? 'max-h-[500px]' : 'max-h-30 overflow-hidden'
                 }`}
               >
-                {rideData?.destination || "N/A"}
+                {typeof rideData?.destination === 'string' ? rideData.destination : rideData?.destination?.formatted_address || "N/A"}
               </p>
             </div>
           </div>

@@ -3,8 +3,10 @@ import { useDispatch } from "react-redux";
 import { setUserData } from "../../actions/userActions";
 import { Link } from "react-router-dom";
 import logo from "../../assets/logo1.png";
+import halfPageImage from "../../assets/half_page.jpg";
 import { useNavigate } from "react-router-dom";
 import axios from 'axios'
+import { TokenManager } from '../../utils/tokenManager';
 
 const UserSignup = () => {
   const dispatch = useDispatch();
@@ -61,12 +63,9 @@ const UserSignup = () => {
         setPassword("");
         setFirstname("");
         setLastname("");
-        localStorage.setItem('usertoken',response.data.token)
+        TokenManager.setToken('usertoken', response.data.token, 24)
         navigate('/home');
       }
-      setTimeout(() => {
-        localStorage.removeItem('usertoken');
-      }, 3600000); // 1 hour in milliseconds
     } catch (err) {
       if (err.response) {
         switch (err.response.status) {
@@ -90,14 +89,18 @@ const UserSignup = () => {
   };
 
   return (
-    <div className="h-screen bg-cover bg-center font-lexend flex flex-col justify-between">
-      <div className="p-5">
-        <img src={logo} alt="Routeify Logo" className="w-20 mx-auto" />
-      </div>
+    <div className="h-screen bg-cover bg-center font-lexend flex">
+      {/* Signup Section - Left Side (Desktop) / Full Width (Mobile) */}
+      <div className="w-full lg:w-1/2 flex flex-col justify-between">
+        {/* Logo Section */}
+        <div className="p-5">
+          <img src={logo} alt="Routeify Logo" className="w-20 mx-auto" />
+        </div>
 
-      <div className="bg-white p-5 flex h-screen flex-col items-center justify-between gap-4 rounded-t-lg">
-        <div>
-          <form className="w-full max-w-md" onSubmit={submitHandler}>
+        {/* Signup Form Section */}
+        <div className="bg-white p-5 flex h-screen flex-col items-center justify-between gap-4 rounded-t-lg md:max-w-lg md:mx-auto md:w-full">
+        <div className="w-full">
+          <form className="w-full max-w-md md:max-w-none" onSubmit={submitHandler}>
             {/* Firstname and Lastname Fields */}
             <div className="flex gap-2">
               <div>
@@ -183,12 +186,23 @@ const UserSignup = () => {
           </p>
         </div>
 
-        {/* Privacy Policy Text */}
-        <div className="text-center pt-4 mb-2">
-          <p className="text-gray-600 text-xs">
-            By signing up, you agree to our Privacy Policy and Terms of Service.
-          </p>
+          {/* Privacy Policy Text */}
+          <div className="text-center pt-4 mb-2">
+            <p className="text-gray-600 text-xs">
+              By signing up, you agree to our Privacy Policy and Terms of Service.
+            </p>
+          </div>
         </div>
+      </div>
+
+      {/* Half Page Image - Right Side (Desktop Only) */}
+      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
+        <img 
+          src={halfPageImage} 
+          alt="Routeify Background" 
+          className="w-full h-full object-cover transition-transform duration-500 ease-in-out hover:scale-105"
+        />
+        <div className="absolute inset-0 bg-black bg-opacity-20"></div>
       </div>
     </div>
   );

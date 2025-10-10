@@ -23,7 +23,6 @@ const RideSuccess = () => {
     const rideData = locationData || reduxData;
 
     if (!rideData.pickup || !rideData.destination) {
-      console.log('No ride data found, redirecting to captain page');
       navigate('/captain');
       return;
     }

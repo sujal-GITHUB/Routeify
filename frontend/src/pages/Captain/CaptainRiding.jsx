@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import gsap from "gsap";
 import logo from "../../assets/logo1.png";
 import UserDetails from "../../components/Captain/UserDetails";
+import CaptainMap from "../../components/Captain/CaptainMap";
 
 const CaptainRiding = () => {
   const navigate = useNavigate();
@@ -39,9 +40,8 @@ const CaptainRiding = () => {
 
   return (
     <div className="h-screen font-lexend relative">
-      <div className="absolute inset-0 -z-10">
-        <img src="/image-copy.png" alt="Background" className="w-full h-full object-cover" />
-      </div>
+      {/* Map Background */}
+      <CaptainMap />
 
       <div className="p-5">
         <img src={logo} alt="Routeify Logo" className="w-20" />

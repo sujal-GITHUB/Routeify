@@ -3,7 +3,9 @@ import { Link, useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { setCaptainData } from "../../actions/captainActions"; // Fixed import
 import logo from "../../assets/car1.png";
+import halfPageImage from "../../assets/half_page.jpg";
 import axios from "axios";
+import { TokenManager } from '../../utils/tokenManager';
 
 const CaptainSignUp = () => {
  const [email, setEmail] = useState("");
@@ -78,11 +80,9 @@ const CaptainSignUp = () => {
        setPlate("");
        setCapacity("");
        setVehicleType("");
-       localStorage.setItem('captaintoken',response.data.token)
+       TokenManager.setToken('captaintoken', response.data.token, 24)
        navigate("/captain");
-     }setTimeout(() => {
-      localStorage.removeItem('captaintoken');
-    }, 3600000); // 1 hour in milliseconds
+     }
    } catch (err) {
      if (err.response) {
        switch (err.response.status) {
@@ -106,16 +106,18 @@ const CaptainSignUp = () => {
  };
 
  return (
-   <div className="h-screen bg-cover bg-center font-lexend flex flex-col justify-between">
-     {/* Logo Section */}
-     <div className="p-5 pb-2">
-       <img src={logo} alt="Routeify Logo" className="w-16 mx-auto" />
-     </div>
+   <div className="h-screen bg-cover bg-center font-lexend flex">
+     {/* Signup Section - Left Side (Desktop) / Full Width (Mobile) */}
+     <div className="w-full lg:w-1/2 flex flex-col justify-between">
+       {/* Logo Section */}
+       <div className="p-5 pb-2">
+         <img src={logo} alt="Routeify Logo" className="w-16 mx-auto" />
+       </div>
 
-     {/* Signup Form Section */}
-     <div className="bg-white p-5 pt-0 flex h-screen flex-col items-center justify-between gap-4 rounded-t-lg">
+       {/* Signup Form Section */}
+       <div className="bg-white p-5 pt-0 flex h-screen flex-col items-center justify-between gap-4 rounded-t-lg md:max-w-2xl md:mx-auto md:w-full">
        <div className="w-full">
-         <form className="w-full" onSubmit={submitHandler}>
+         <form className="w-full max-w-2xl" onSubmit={submitHandler}>
            {/* Firstname and Lastname Fields */}
            <div className="flex gap-2">
              <div>
@@ -260,11 +262,22 @@ const CaptainSignUp = () => {
          </p>
        </div>
 
-       <div className="text-center pt-4 mb-2">
-         <p className="text-gray-600 text-xs">
-           By signing up, you agree to our Privacy Policy and Terms of Service.
-         </p>
+         <div className="text-center pt-4 mb-2">
+           <p className="text-gray-600 text-xs">
+             By signing up, you agree to our Privacy Policy and Terms of Service.
+           </p>
+         </div>
        </div>
+     </div>
+
+     {/* Half Page Image - Right Side (Desktop Only) */}
+     <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
+       <img 
+         src={halfPageImage} 
+         alt="Routeify Background" 
+         className="w-full h-full object-cover transition-transform duration-500 ease-in-out hover:scale-105"
+       />
+       <div className="absolute inset-0 bg-black bg-opacity-20"></div>
      </div>
    </div>
  );

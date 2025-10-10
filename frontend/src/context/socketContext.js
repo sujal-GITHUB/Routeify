@@ -20,11 +20,9 @@ socket.on("connect_error", (error) => {
 });
 
 socket.on("connect", () => {
-  console.log("Socket connected successfully!");
 });
 
 socket.on("disconnect", (reason) => {
-  console.log("Socket disconnected:", reason);
 });
 
 // Create context only once

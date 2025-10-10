@@ -10,7 +10,6 @@ const resetHoursOnlineAtMidnight = async () => {
             {}, 
             { $set: { hoursOnline: 0 } }
         );
-        console.log(`Reset hoursOnline for ${result.modifiedCount} captains at midnight`);
     } catch (error) {
         console.error('Error resetting hoursOnline:', error);
     }
@@ -20,7 +19,6 @@ const registerCaptain = async (req, res) => {
     try {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
-            console.log("Validation errors:", errors.array());
             return res.status(400).json({ errors: errors.array() });
         }
 

@@ -27,7 +27,6 @@ const Success = () => {
 
     // Redirect to /home if no ride data, not /captain
     if (!rideData.pickup || !rideData.destination) {
-      console.log('No ride data found, redirecting to home page');
       navigate('/home');
       return;
     }

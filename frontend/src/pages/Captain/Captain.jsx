@@ -10,6 +10,8 @@ import { fetchCaptainData } from "../../actions/captainActions";
 import { socketContext } from "../../context/socketContext";
 import CompleteRide from "../../components/Captain/CompleteRide";
 import WaitingForUser from "../../components/Captain/WaitingForUser";
+import CaptainMap from "../../components/Captain/CaptainMap";
+import { TokenManager } from "../../utils/tokenManager";
 
 // Add this helper function at the top of your component
 const getMidnightTime = () => {
@@ -40,16 +42,19 @@ const Captain = () => {
 
   // Fetch captain data on mount
   useEffect(() => {
+    // Debug: Check captain token
+    const token = TokenManager.getToken("captaintoken");
     dispatch(fetchCaptainData());
     setLoading(false);
   }, [dispatch]);
 
   // Connect captain to socket
   useEffect(() => {
-    if (!loading && id?.trim().length === 24) {
+    if (!loading && id && id.trim().length === 24 && socket) {
       socket.emit("join", { userType: "captain", userId: id.trim() });
+    } else {
     }
-  }, [id, socket, loading]);
+  }, [id, socket, loading, captainData]); // Added captainData dependency
 
   // Update captain's location every 10 seconds
   useEffect(() => {
@@ -81,8 +86,7 @@ const Captain = () => {
   // Handle new ride request and ride-no-longer-available
   useEffect(() => {
     if (!socket) return;
-    socket.on("new-ride", (data) => {
-      console.log("🚖 New ride received:", data);
+    socket.on("new-ride-request", (data) => {
       setNewRide(data);
       setShowConfirmRide(true);
       setRideAccepted(false);
@@ -115,7 +119,7 @@ const Captain = () => {
     });
 
     return () => {
-      socket.off("new-ride");
+      socket.off("new-ride-request");
       socket.off("ride-confirmed");
       socket.off("ride-cancelled");
       socket.off("ride-no-longer-available");
@@ -149,8 +153,13 @@ const Captain = () => {
   
     const updateHoursInBackend = async (hours) => {
       try {
-        const token = localStorage.getItem("captaintoken");
-        await axios.post(
+        const token = TokenManager.getToken("captaintoken");
+        if (!token) {
+          console.error("No captain token found or token expired");
+          return;
+        }
+        
+        const response = await axios.post(
           `${import.meta.env.VITE_BASE_URL}/captains/update`,
           { hoursOnline: hours },
           { headers: { Authorization: `Bearer ${token}` } }
@@ -158,7 +167,7 @@ const Captain = () => {
         // Fetch updated captain data after updating hours
         await dispatch(fetchCaptainData());
       } catch (error) {
-        console.error("Failed to update hours:", error);
+        console.error("❌ Failed to update hours:", error.response?.status, error.response?.data);
       }
     };
   
@@ -226,11 +235,16 @@ const Captain = () => {
   // Logout function
   const logout = async () => {
     try {
-      const token = localStorage.getItem("captaintoken");
+      const token = TokenManager.getToken("captaintoken");
+      if (!token) {
+        console.error("No captain token found or token expired");
+        navigate("/captain-login");
+        return;
+      }
       await axios.get(`${import.meta.env.VITE_BASE_URL}/captains/logout`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      localStorage.removeItem("captaintoken");
+      TokenManager.removeToken("captaintoken");
       navigate("/captain-login");
     } catch (error) {
       console.error("Logout failed:", error);
@@ -257,9 +271,12 @@ const Captain = () => {
   // Toggle active status
   const toggleActiveStatus = async () => {
     try {
-      const token = localStorage.getItem("captaintoken");
+      const token = TokenManager.getToken("captaintoken");
+      if (!token) {
+        console.error("No captain token found or token expired");
+        return;
+      }
       const newStatus = status === 'active' ? "inactive" : "active";
-      
       await axios.post(
         `${import.meta.env.VITE_BASE_URL}/captains/update`,
         { 
@@ -268,24 +285,17 @@ const Captain = () => {
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-
       // Fetch updated data from backend
       dispatch(fetchCaptainData());
     } catch (error) {
-      console.error("Failed to update status:", error);
+      console.error("❌ Failed to update status:", error.response?.data || error.message);
     }
   };
 
   return (
     <div className="h-screen font-lexend relative">
-      {/* Background */}
-      <div className="absolute inset-0 -z-10">
-        <img
-          src="/image.png"
-          alt="Background"
-          className="w-full h-full object-cover"
-        />
-      </div>
+      {/* Map Background */}
+      <CaptainMap rideData={newRide} />
 
       {/* Logo */}
       <div className="p-5">
@@ -348,20 +358,20 @@ const Captain = () => {
               setRides={setRides}
               ref={confirmRideRef}
               setNewRide={setNewRide}
-              rideData={newRide}
+              rideData={newRide?.ride || newRide}
               onAccept={handleAccept}
               setRideStart={setRideStart}
             />
           ) : rideAccepted ? (
             <WaitingForUser 
-              rideData={newRide}
+              rideData={newRide?.ride || newRide}
               setRideStart={setRideStart}
               setRideAccepted={setRideAccepted}
               setNewRide={setNewRide}
             />
           ) : rideStart ? (
             <CompleteRide
-              rideData={newRide} 
+              rideData={newRide?.ride || newRide} 
               rides={rides}
             />
           ) : (

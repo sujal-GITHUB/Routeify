@@ -8,6 +8,7 @@ import auto from "../../assets/auto.png";
 import { socketContext } from '../../context/socketContext';
 import axios from 'axios';
 import PropTypes from "prop-types";
+import { TokenManager } from '../../utils/tokenManager';
 
 const FindCaptains = ({ handleCancelRide }) => {
   const dispatch = useDispatch();
@@ -28,9 +29,8 @@ const FindCaptains = ({ handleCancelRide }) => {
     if (ride.pickup && ride.destination && ride.vehicletype && !rideCreatedRef.current) {
       const createRideAndEmit = async () => {
         try {
-          const token = localStorage.getItem("usertoken");
+          const token = TokenManager.getToken("usertoken");
           if (!token) {
-            console.error("No user token found");
             return;
           }
 
@@ -38,9 +38,18 @@ const FindCaptains = ({ handleCancelRide }) => {
 
           const payload = {
             user: user.id,
-            pickup: ride.pickup,
-            destination: ride.destination,
+            pickup: typeof ride.pickup === 'string' ? ride.pickup : ride.pickup?.formatted_address || '',
+            destination: typeof ride.destination === 'string' ? ride.destination : ride.destination?.formatted_address || '',
             vehicleType: ride.vehicletype,
+            // Include coordinates to avoid re-geocoding issues
+            pickupCoordinates: (typeof ride.pickup === 'object' && (ride.pickup?.latitude && ride.pickup?.longitude)) ? {
+              latitude: ride.pickup.latitude,
+              longitude: ride.pickup.longitude
+            } : null,
+            destinationCoordinates: (typeof ride.destination === 'object' && (ride.destination?.latitude && ride.destination?.longitude)) ? {
+              latitude: ride.destination.latitude,
+              longitude: ride.destination.longitude
+            } : null,
           };
 
           const response = await axios.post(
@@ -71,11 +80,9 @@ const FindCaptains = ({ handleCancelRide }) => {
               price: ride.price
             });
           } else {
-            console.error('Ride creation failed. Ride ID is missing.');
             dispatch(setRideData({ status: 'error' }));
           }
         } catch (error) {
-          console.error("Error creating ride:", error.response?.data || error.message);
           dispatch(setRideData({ status: 'error' }));
           rideCreatedRef.current = false;
         }
@@ -105,7 +112,6 @@ const FindCaptains = ({ handleCancelRide }) => {
     };
 
     const handleSocketError = (error) => {
-      console.error('Socket error:', error);
       dispatch(setRideData({ status: 'error' }));
     };
 
@@ -141,8 +147,8 @@ const FindCaptains = ({ handleCancelRide }) => {
         )}
 
         <div className="pt-4 w-full border-t border-gray-300 text-black space-y-1 px-0">
-          <p className="text-sm"><strong>Pickup:</strong> {ride.pickup}</p>
-          <p className="text-sm"><strong>Destination:</strong> {ride.destination}</p>
+          <p className="text-sm"><strong>Pickup:</strong> {typeof ride.pickup === 'string' ? ride.pickup : ride.pickup?.formatted_address || ''}</p>
+          <p className="text-sm"><strong>Destination:</strong> {typeof ride.destination === 'string' ? ride.destination : ride.destination?.formatted_address || ''}</p>
           <p className="text-sm"><strong>Price:</strong> <span className='text-green-500'>₹{ride.price}</span></p>
         </div>
 

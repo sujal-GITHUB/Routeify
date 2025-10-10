@@ -18,6 +18,7 @@ import FindCaptains from "../../components/User/FindCaptains";
 import { socketContext } from "../../context/socketContext";
 import { fetchUserData } from "../../actions/userActions";
 import Map from "../Map";
+import { TokenManager } from "../../utils/tokenManager";
 
 const Home = () => {
   const dispatch = useDispatch();
@@ -200,11 +201,19 @@ const Home = () => {
         [type === "pickup" ? "pickup" : "destination"]: location,
       })
     );
+    
+    // Update the input field with the address string
+    if (type === "pickup") {
+      const address = typeof location === 'string' ? location : location.formatted_address;
+      setInput(address);
+    }
   };
 
   const handleDestinationSelect = (location) => {
     dispatch(setRideData({ destination: location }));
-    setDestinationInput(location);
+    // Extract the address string for the input field
+    const address = typeof location === 'string' ? location : location.formatted_address;
+    setDestinationInput(address);
   };
 
   // Reset to initial state
@@ -283,7 +292,6 @@ const Home = () => {
 
         socket.emit("cancel-ride", { userId: user.id, rideId: rideId });
 
-
         setInput("");
         setDestinationInput("");
 
@@ -332,12 +340,27 @@ const Home = () => {
       alert("Please select both locations and a ride type.");
       return;
     }
-    console.log("Booking:", { pickup, destination, selectedRide, price });
   };
 
   const logout = async () => {
     try {
-      const token = localStorage.getItem("usertoken");
+      const token = TokenManager.getToken("usertoken");
+      if (!token) {
+        // If no token, just clear local state and redirect
+        localStorage.removeItem("usertoken");
+        dispatch(setUserData(initialState));
+        dispatch(
+          setRideData({
+            pickup: "",
+            destination: "",
+            selectedRide: "",
+            price: "",
+          })
+        );
+        navigate("/login");
+        return;
+      }
+
       const response = await axios.get(
         `${import.meta.env.VITE_BASE_URL}/users/logout`,
         {
@@ -491,12 +514,12 @@ const Home = () => {
 
   return (
     // Update the root div className to prevent scrolling
-    <div className="h-screen font-lexend relative overflow-hidden">
-      <div className="absolute inset-0 -z-10">
+    <div className="h-screen w-screen font-lexend relative overflow-hidden">
+      <div className="absolute inset-0 z-0">
         <Map />
       </div>
 
-      <div className="p-5">
+      <div className="p-5 relative z-5">
         <img src={logo} alt="Routeify Logo" className="w-20" />
       </div>
 
@@ -568,7 +591,7 @@ const Home = () => {
                   </div>
                 </div>
                 <input
-                  value={activePanel === "pickup" ? input : pickup}
+                  value={activePanel === "pickup" ? input : (typeof pickup === 'string' ? pickup : pickup?.formatted_address || '')}
                   onChange={(e) => {
                     if (activePanel === "pickup") {
                       setInput(e.target.value);
@@ -592,7 +615,7 @@ const Home = () => {
                   value={
                     activePanel === "destination"
                       ? destinationInput
-                      : destination
+                      : (typeof destination === 'string' ? destination : destination?.formatted_address || '')
                   }
                   onChange={(e) => {
                     if (activePanel === "destination") {

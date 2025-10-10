@@ -7,7 +7,7 @@ const generateRandomEmail = () => {
     return `user${timestamp}@example.com`;
 };
 
-describe.skip('User Endpoints', () => {
+describe('User Endpoints', () => {
     it('should register a new user', async () => {
         const email = generateRandomEmail(); // Generate a random email
         const res = await request(BACKEND_URL)
@@ -99,7 +99,7 @@ describe.skip('User Endpoints', () => {
     });
 })    
 
-describe.skip('Captain Endpoints', () => {
+describe('Captain Endpoints', () => {
     it('should register a new captain', async () => {
         const email = generateRandomEmail(); // Generate a random email
         const res = await request(BACKEND_URL)

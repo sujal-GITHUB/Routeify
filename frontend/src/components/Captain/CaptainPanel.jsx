@@ -1,12 +1,18 @@
 import React from 'react'
 import {useNavigate} from 'react-router-dom';
 import axios from 'axios';
+import { TokenManager } from '../../utils/tokenManager';
 
 const CaptainPanel = () => {
     const navigate = useNavigate();
 
     const logout = () => {
-        const token = localStorage.getItem('captaintoken');
+        const token = TokenManager.getToken('captaintoken');
+        if (!token) {
+          console.error('No captain token found or token expired');
+          navigate('/captain-login');
+          return;
+        }
     
         axios
           .get(`${import.meta.env.VITE_BASE_URL}/captains/logout`, {
@@ -16,7 +22,7 @@ const CaptainPanel = () => {
           })
           .then((response) => {
             if (response.status === 200) {
-              localStorage.removeItem('captaintoken');
+              TokenManager.removeToken('captaintoken');
               navigate('/captain-login');
             }
           })

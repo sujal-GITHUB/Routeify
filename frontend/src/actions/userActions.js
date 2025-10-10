@@ -22,11 +22,13 @@ export const fetchUserDataFailure = (error) => ({
 });
 
 // Example of an async action to fetch user data
+import { TokenManager } from '../utils/tokenManager';
+
 export const fetchUserData = () => {
   return async (dispatch) => {
     dispatch(fetchUserDataRequest()); // Dispatch request action
     try {
-      const token = localStorage.getItem('usertoken')
+      const token = TokenManager.getToken('usertoken')
       const response = await fetch(`${import.meta.env.VITE_BASE_URL}/users/profile`,
         {
           headers: { Authorization: `Bearer ${token}` },

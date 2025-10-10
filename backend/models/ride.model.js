@@ -20,7 +20,14 @@ const rideSchema = new mongoose.Schema({
     },
     fare: {
         type: Number,
-        required: true
+        required: true,
+        min: [0, 'Fare must be a positive number'],
+        validate: {
+            validator: function(value) {
+                return Number.isFinite(value) && value >= 0;
+            },
+            message: 'Fare must be a valid positive number'
+        }
     },
     status: {
         type: String,
@@ -43,10 +50,46 @@ const rideSchema = new mongoose.Schema({
         type: String
     },
     otp:{
-        type:Number,
+        type: Number,
         select: false,
-        required: true
+        required: true,
+        validate: {
+            validator: function(value) {
+                return Number.isInteger(value) && value >= 100000 && value <= 999999;
+            },
+            message: 'OTP must be a 6-digit number'
+        }
+    },
+    createdAt: {
+        type: Date,
+        default: Date.now
+    },
+    updatedAt: {
+        type: Date,
+        default: Date.now
+    },
+    cancelledAt: {
+        type: Date
+    },
+    completedAt: {
+        type: Date
+    },
+    cancelledBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'user'
     }
+});
+
+// Pre-save middleware to update updatedAt field
+rideSchema.pre('save', function(next) {
+    this.updatedAt = new Date();
+    next();
+});
+
+// Pre-update middleware to update updatedAt field
+rideSchema.pre(['findOneAndUpdate', 'updateOne', 'updateMany'], function(next) {
+    this.set({ updatedAt: new Date() });
+    next();
 });
 
 module.exports = mongoose.model('Ride', rideSchema);

@@ -1,233 +1,241 @@
-import { useEffect, useContext, useRef, useState, useCallback, useMemo } from 'react'
+import { useEffect, useContext, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { socketContext } from '../context/socketContext'
 import { FaLocationArrow } from 'react-icons/fa'
-import { useJsApiLoader, GoogleMap, Marker, DirectionsRenderer } from '@react-google-maps/api'
-
-const libraries = ['places']
-const mapContainerStyle = {
-  width: '100%',
-  height: '100%'
-}
+import { getDistanceTime, getRoute } from '../utils/mapUtils'
+import MapboxMap from '../components/Map/MapboxMap'
 
 function LiveTracking() {
-  // 1. First declare all refs
-  const mapRef = useRef(null);
-
-  // 2. Then context and selectors
   const { socket } = useContext(socketContext);
   const { pickup, destination, captain } = useSelector(state => state.ride);
 
-  // 3. Then all state declarations
-  const [map, setMap] = useState(null);
   const [captainLocation, setCaptainLocation] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
-  const [directionsResponse, setDirectionsResponse] = useState(null);
   const [distance, setDistance] = useState('');
   const [duration, setDuration] = useState('');
+  const [markers, setMarkers] = useState([]);
+  const [isCalculating, setIsCalculating] = useState(false);
+  const [route, setRoute] = useState(null);
   const [routeData, setRouteData] = useState({
     lastPickup: null,
     lastDestination: null,
   });
 
-  // 4. Google Maps loader
-  const { isLoaded, loadError } = useJsApiLoader({
-    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
-    libraries,
-  });
-
-  // 5. Memoized values
-  const centerLocation = useMemo(() => {
-    if (captainLocation) return captainLocation;
-    if (pickup) return pickup;
-    if (userLocation) return userLocation;
-    return { lat: 20.5937, lng: 78.9629 }; // Default to India
-  }, [captainLocation, pickup, userLocation]);
-
-  // 6. Callbacks
-  const onLoad = useCallback(map => {
-    mapRef.current = map;
-    setMap(map);
-  }, []);
-
-  const onUnmount = useCallback(() => {
-    mapRef.current = null;
-    setMap(null);
-  }, []);
-
-  // 7. Effects
+  // Get user's current location
   useEffect(() => {
-    if (!pickup || !destination) {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            const { latitude, longitude } = position.coords;
-            setUserLocation({ lat: latitude, lng: longitude });
-          },
-          (error) => {
-            console.error('Error getting user location:', error);
-            setUserLocation({ lat: 20.5937, lng: 78.9629 });
-          },
-          { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-        );
-      }
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          setUserLocation({ latitude, longitude });
+        },
+        (error) => {
+          console.error('Error getting user location:', error);
+          setUserLocation({ latitude: 20.5937, longitude: 78.9629 });
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      );
     }
-  }, [pickup, destination]);
+  }, []);
 
+  // Captain location update listener
   useEffect(() => {
-    if (!socket || !captain?.location?.coordinates) return;
+    if (!socket) return;
 
-    const [longitude, latitude] = captain.location.coordinates;
-    setCaptainLocation({
-      lat: latitude,
-      lng: longitude
-    });
-
-    const handleLocationUpdate = (data) => {
+    socket.on('captain-location-update', (data) => {
       if (data.location) {
         setCaptainLocation({
-          lat: data.location.latitude,
-          lng: data.location.longitude
+          latitude: data.location.latitude,
+          longitude: data.location.longitude
         });
       }
-    };
+    });
 
-    socket.on('captain-location-update', handleLocationUpdate);
-    return () => socket.off('captain-location-update', handleLocationUpdate);
-  }, [socket, captain]);
+    return () => socket.off('captain-location-update');
+  }, [socket]);
 
+  // Update markers based on locations
   useEffect(() => {
-    if (!isLoaded || !pickup || !destination) return;
-    if (routeData.lastPickup === pickup && 
-        routeData.lastDestination === destination && 
-        directionsResponse) return;
-
-    const calculateRoute = async () => {
-      try {
-        const directionsService = new window.google.maps.DirectionsService();
-        const result = await directionsService.route({
-          origin: pickup,
-          destination: destination,
-          travelMode: window.google.maps.TravelMode.DRIVING,
+    const newMarkers = [];
+    
+    if (pickup) {
+      const lat = pickup.latitude || pickup.lat;
+      const lng = pickup.longitude || pickup.lng;
+      if (lat && lng) {
+        newMarkers.push({
+          latitude: lat,
+          longitude: lng,
+          color: '#10B981',
+          popup: 'Pickup Location'
         });
-        
-        setDirectionsResponse(result);
-        setDistance(result.routes[0].legs[0].distance.text);
-        setDuration(result.routes[0].legs[0].duration.text);
-        setRouteData({ lastPickup: pickup, lastDestination: destination });
+      }
+    }
+    
+    if (destination) {
+      const lat = destination.latitude || destination.lat;
+      const lng = destination.longitude || destination.lng;
+      if (lat && lng) {
+        newMarkers.push({
+          latitude: lat,
+          longitude: lng,
+          color: '#EF4444',
+          popup: 'Destination'
+        });
+      }
+    }
+    
+    if (captainLocation && captainLocation.latitude && captainLocation.longitude) {
+      newMarkers.push({
+        latitude: captainLocation.latitude,
+        longitude: captainLocation.longitude,
+        color: '#3B82F6',
+        popup: 'Captain'
+      });
+    }
+    
+    if (userLocation && userLocation.latitude && userLocation.longitude) {
+      newMarkers.push({
+        latitude: userLocation.latitude,
+        longitude: userLocation.longitude,
+        color: '#8B5CF6',
+        popup: 'Your Location'
+      });
+    }
+    
+    setMarkers(newMarkers);
+  }, [pickup, destination, captainLocation, userLocation]);
 
-        if (map && captainLocation) {
-          const bounds = new window.google.maps.LatLngBounds();
-          result.routes[0].legs[0].steps.forEach(step => {
-            bounds.extend(step.start_location);
-            bounds.extend(step.end_location);
-          });
-          bounds.extend(new window.google.maps.LatLng(
-            captainLocation.lat,
-            captainLocation.lng
-          ));
-          map.fitBounds(bounds);
+  // Calculate distance and time when pickup and destination are available
+  useEffect(() => {
+    const calculateRouteInfo = async () => {
+      if (!pickup || !destination) {
+        setDistance('');
+        setDuration('');
+        return;
+      }
+
+      try {
+        setIsCalculating(true);
+        const result = await getDistanceTime(pickup, destination);
+        
+        if (result && result.distance && result.duration) {
+          setDistance(result.distance);
+          setDuration(result.duration);
+          
+          // Fetch route geometry for visualization
+          try {
+            // Check if we have coordinate data
+            const pickupHasCoords = pickup && typeof pickup === 'object' && pickup.latitude && pickup.longitude;
+            const destinationHasCoords = destination && typeof destination === 'object' && destination.latitude && destination.longitude;
+            
+            if (pickupHasCoords && destinationHasCoords) {
+              const routeResult = await getRoute(pickup.latitude, pickup.longitude, destination.latitude, destination.longitude);
+              if (routeResult && routeResult.geometry) {
+                setRoute(routeResult.geometry);
+              }
+            }
+          } catch (routeError) {
+            console.error('❌ Error fetching route geometry in LiveTracking:', routeError);
+          }
         }
       } catch (error) {
-        console.error('Direction Service error:', error);
+        console.error('Error calculating distance and time:', error);
+        setDistance('');
+        setDuration('');
+      } finally {
+        setIsCalculating(false);
       }
     };
 
-    calculateRoute();
-  }, [isLoaded, pickup, destination, map, captainLocation]);
+    calculateRouteInfo();
+  }, [pickup, destination]);
 
-  // Add a useEffect to preserve map center on panel toggle
-  useEffect(() => {
-    if (map && directionsResponse) {
-      const bounds = new window.google.maps.LatLngBounds()
-      directionsResponse.routes[0].legs[0].steps.forEach(step => {
-        bounds.extend(step.start_location)
-        bounds.extend(step.end_location)
-      })
-      map.fitBounds(bounds)
+  // Calculate center point for map
+  const getMapCenter = () => {
+    // Validate captain location
+    if (captainLocation && captainLocation.longitude && captainLocation.latitude) {
+      return [captainLocation.longitude, captainLocation.latitude];
     }
-  }, [directionsResponse]); // Remove map dependency
-
-  if (loadError) return <div>Error loading maps</div>
-  if (!isLoaded) return <div>Loading maps...</div>
+    
+    // Validate pickup location
+    if (pickup) {
+      const lng = pickup.longitude || pickup.lng;
+      const lat = pickup.latitude || pickup.lat;
+      if (lng && lat) {
+        return [lng, lat];
+      }
+    }
+    
+    // Validate user location
+    if (userLocation && userLocation.longitude && userLocation.latitude) {
+      return [userLocation.longitude, userLocation.latitude];
+    }
+    
+    // Default to India
+    return [78.9629, 20.5937];
+  };
 
   return (
-    <div className="relative flex flex-col h-screen w-screen">
-      <div className="absolute inset-0">
-        <GoogleMap
-          mapContainerStyle={mapContainerStyle}
-          center={centerLocation}
-          zoom={15}
-          onLoad={onLoad}
-          onUnmount={onUnmount}
-          options={{
-            zoomControl: false,
-            streetViewControl: false,
-            mapTypeControl: false,
-            fullscreenControl: false,
-          }}
-        >
-          {captainLocation && (
-            <Marker
-              position={captainLocation}
-              icon={{
-                url: '/car-icon.png',
-                scaledSize: new window.google.maps.Size(40, 40),
-                anchor: new window.google.maps.Point(20, 20) // Center the icon
-              }}
-            />
-          )}
+    <div className="relative w-screen h-screen">
+      <MapboxMap
+        center={getMapCenter()}
+        zoom={15}
+        markers={markers}
+        route={route}
+        className="w-full h-full"
+        onLocationSelect={(location) => {
+        }}
+      />
 
-          {pickup && (
-            <Marker
-              position={typeof pickup === 'string' ? 
-                // Convert pickup string to coordinates if needed
-                { lat: parseFloat(pickup.split(',')[0]), lng: parseFloat(pickup.split(',')[1]) } 
-                : pickup
-              }
-              icon={{
-                url: '/pickup-location.png',
-                scaledSize: new window.google.maps.Size(32, 32)
-              }}
-            />
+      <div className="absolute top-4 right-4 bg-white p-4 py-2 rounded-lg shadow-md max-w-sm z-10">
+        <div className="flex items-center gap-2 mb-2">
+          <FaLocationArrow className="text-blue-500" />
+          <span className="text-gray-700 text-sm font-medium">Live Tracking</span>
+        </div>
+        <div className="space-y-1">
+          {isCalculating ? (
+            <p className="text-gray-500 text-xs">Calculating...</p>
+          ) : (
+            <>
+              {distance && (
+                <div className="flex items-center gap-2">
+                  <i className="ri-road-map-line text-blue-500"></i>
+                  <p className="text-gray-700 text-xs font-medium">Distance: {distance}</p>
+                </div>
+              )}
+              {duration && (
+                <div className="flex items-center gap-2">
+                  <i className="ri-time-line text-green-500"></i>
+                  <p className="text-gray-700 text-xs font-medium">ETA: {duration}</p>
+                </div>
+              )}
+            </>
           )}
-
-          {destination && (
-            <Marker
-              position={typeof destination === 'string' ? 
-                { lat: parseFloat(destination.split(',')[0]), lng: parseFloat(destination.split(',')[1]) }
-                : destination
-              }
-              icon={{
-                url: '/destination-location.png',
-                scaledSize: new window.google.maps.Size(32, 32)
-              }}
-            />
-          )}
-          {userLocation && !pickup && (
-            <Marker
-              position={userLocation}
-              icon={{
-                url: '/user-location.png',
-                scaledSize: new window.google.maps.Size(32, 32)
-              }}
-            />
-          )}
-          {directionsResponse && (
-            <DirectionsRenderer directions={directionsResponse} />
-          )}
-        </GoogleMap>
+        </div>
       </div>
 
-      <div className="absolute top-4 right-4 bg-white p-4 py-2 rounded-full shadow-md max-w-sm z-10">
-        {!pickup && !destination && (
-          <p className="text-gray-700 mb-2"><i className="ri-user-location-line"></i></p>
-        )}
-        {distance && <p className="text-gray-700 text-xs">Distance: {distance}</p>}
-        {duration && <p className="text-gray-700 text-xs">Time: {duration}</p>}
-      </div>
+      {/* Captain info panel */}
+      {captain && (
+        <div className="absolute bottom-4 left-4 bg-white p-4 rounded-lg shadow-md max-w-sm z-10">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+              <span className="text-blue-600 font-semibold">
+                {captain.fullname?.firstname?.[0] || 'C'}
+              </span>
+            </div>
+            <div>
+              <p className="font-semibold text-gray-800">
+                {captain.fullname?.firstname} {captain.fullname?.lastname}
+              </p>
+              <p className="text-sm text-gray-600">
+                {captain.vehicle?.vehicleType} • {captain.vehicle?.color}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
-  )
+  );
 }
 
-export default LiveTracking
+export default LiveTracking;
